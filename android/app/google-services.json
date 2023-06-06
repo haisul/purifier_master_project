@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "753864698672",
+    "project_id": "purifier-master-9dca0",
+    "storage_bucket": "purifier-master-9dca0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:753864698672:android:a269275e9764844fecf6f5",
+        "android_client_info": {
+          "package_name": "com.example.purifier_master_project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "753864698672-atvfpibvmng2p4vajsedufkblkh9c6nt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-gMNf_dne5WAuov7vODKASkGEF4GEgR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "753864698672-atvfpibvmng2p4vajsedufkblkh9c6nt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "753864698672-ht4dct05qd25nf9vl1ijvhh1btfsijje.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.purifierMasterProject"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
