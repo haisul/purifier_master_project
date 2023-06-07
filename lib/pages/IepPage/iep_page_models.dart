@@ -26,28 +26,24 @@ class IepPageControll with ChangeNotifier {
   }
 
   void functionJsonConvert(String msg) {
-    if (msg.startsWith('#')) {
-      msg = msg.replaceAll("#", "");
-      final Map<String, dynamic> funcMap = json.decode(msg);
-      for (int i = 0; i < 4; i++) {
-        var func = functionList[i];
-        func.state = funcMap[func.name]['state'];
-        func.countState = funcMap[func.name]['countState'];
-        func.time = funcMap[func.name]['time'];
-        func.countTime = funcMap[func.name]['time'];
-        _timerStart(funcMap[func.name]);
-        if (func is PurFunctionStatus) {
-          PurFunctionStatus purFunc = func;
-          purFunc.changeMode(funcMap[purFunc.name]['mode']);
-          purFunc.fanSpeed = funcMap[purFunc.name]['speed'];
-        }
+    final Map<String, dynamic> funcMap = json.decode(msg);
+    for (int i = 0; i < 4; i++) {
+      var func = functionList[i];
+      func.state = funcMap[func.name]['state'];
+      func.countState = funcMap[func.name]['countState'];
+      func.time = funcMap[func.name]['time'];
+      func.countTime = funcMap[func.name]['time'];
+      _timerStart(func.name);
+      if (func is PurFunctionStatus) {
+        PurFunctionStatus purFunc = func;
+        purFunc.changeMode(funcMap[purFunc.name]['mode']);
+        purFunc.fanSpeed = funcMap[purFunc.name]['speed'];
       }
     }
     notifyListeners();
   }
 
   void pmsJsonConvert(msg) {
-    msg = msg.replaceAll("#", "");
     final Map<String, dynamic> pmsMap = json.decode(msg);
     pms['pm25'] = pmsMap['pm25'].toDouble();
     pms['temp'] = pmsMap['temp'].toDouble();
@@ -56,7 +52,6 @@ class IepPageControll with ChangeNotifier {
   }
 
   void countTimeJsonConvert(msg) {
-    msg = msg.replaceAll("#", "");
     final Map<String, dynamic> countTimeMap = json.decode(msg);
     for (int i = 0; i < 4; i++) {
       var func = functionList[i];
@@ -109,8 +104,8 @@ class IepPageControll with ChangeNotifier {
       });
     } else if (func.timer != null) {
       if (!func.state || !func.countState) {
-        func.countTime = func.time;
         func.timer?.cancel();
+        func.countTime = func.time;
         notifyListeners();
       }
     }

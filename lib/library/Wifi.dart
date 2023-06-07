@@ -17,7 +17,7 @@ class Wifi {
 
   Map<String, dynamic> get wifiInfo => _wifiInfo;
 
-  Future<bool> updateWifiInfo() async {
+  Future<Map<String, dynamic>?> updateWifiInfo() async {
     try {
       var wifiName = await networkInfo.getWifiName();
       var wifiBSSID = await networkInfo.getWifiBSSID();
@@ -36,10 +36,10 @@ class Wifi {
       _wifiInfo['Gateway'] = wifiGateway!;
 
       logger.i(_wifiInfo);
-      return true;
+      return _wifiInfo;
     } catch (e) {
       logger.e('Not connected to WiFi network:$e');
-      return false;
+      return null;
     }
   }
 

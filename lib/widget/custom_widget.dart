@@ -1309,12 +1309,8 @@ Future<dynamic> callPopup(BuildContext context) {
               boxShadow: const BoxShadow(
                   blurRadius: 5.0, color: Color.fromARGB(120, 0, 0, 0)),
               action: () {
-                LoadingDialog.show(context, '設備關閉中');
-                Timer(const Duration(seconds: 3), () {
-                  LoadingDialog.hide(context);
-                  Navigator.pop(context);
-                  Navigator.pop(context, 'turnOff');
-                });
+                Navigator.pop(context);
+                Navigator.pop(context, 'shutDown');
               },
             ),
           ),

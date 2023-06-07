@@ -143,6 +143,8 @@ class IepPage extends StatelessWidget {
                                   blurRadius: 5.0,
                                   color: Color.fromARGB(120, 0, 0, 0)),
                               action: () {
+                                mqttClient.sendMessage(
+                                    '$userId/$serialNum/app', 'turnOn');
                                 LoadingDialog.show(context, '啟動中');
                                 iepPageControll.updateMainPower(true);
                                 Timer(const Duration(seconds: 3), () {
@@ -235,46 +237,66 @@ class IepPagePur extends StatelessWidget {
               PurModeGroup(
                 mode: context.watch<IepPageControll>().pur.purMode,
                 onSelected: (mode) {
+                  String modeStr = 'Auto';
+                  switch (mode) {
+                    case 0:
+                      modeStr = 'Auto';
+                      break;
+                    case 1:
+                      modeStr = 'Sleep';
+                      break;
+                    case 2:
+                      modeStr = 'Manual';
+                      break;
+                  }
                   mqttClient.sendMessage(
-                      '$userId/$serialNum/app', '${func}Mode$mode');
+                      '$userId/$serialNum/app', '${func}_mode$modeStr');
                   context.read<IepPageControll>().setPurMode(mode);
                 },
               ),
             ],
           ),
-          ControllCardWidget(
-            height: 145,
-            width: 400,
-            title: '清淨範圍調整',
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 15),
-                child: Text(
-                  '${context.watch<IepPageControll>().pur.fanSpeed}%',
-                  style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff5bc1c9)),
+          Consumer<IepPageControll>(builder: (context, controll, child) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: controll.pur.purMode != 2 ? 0 : 180.0,
+              curve: Curves.easeInOut,
+              child: SingleChildScrollView(
+                child: ControllCardWidget(
+                  height: 145,
+                  width: 400,
+                  title: '清淨範圍調整',
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 15),
+                      child: Text(
+                        '${context.watch<IepPageControll>().pur.fanSpeed}%',
+                        style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff5bc1c9)),
+                      ),
+                    ),
+                    Slider(
+                      min: 0.0,
+                      max: 100.0,
+                      divisions: 20,
+                      activeColor: const Color(0xff5bc1c9),
+                      inactiveColor: const Color(0x555bc1c9),
+                      value: controll.pur.fanSpeed.toDouble(),
+                      onChanged: (value) => controll.setPurSpeed(value),
+                      onChangeEnd: (value) {
+                        value < 10 ? value = 10.0 : value = value;
+                        mqttClient.sendMessage('$userId/$serialNum/app',
+                            '${func}_speed:${value.toInt()}');
+                        controll.setPurSpeed(value);
+                      },
+                    ),
+                  ],
                 ),
               ),
-              Slider(
-                min: 0.0,
-                max: 100.0,
-                divisions: 20,
-                activeColor: const Color(0xff5bc1c9),
-                inactiveColor: const Color(0x555bc1c9),
-                value: context.watch<IepPageControll>().pur.fanSpeed.toDouble(),
-                onChanged: (value) =>
-                    context.read<IepPageControll>().setPurSpeed(value),
-                onChangeEnd: (value) {
-                  value < 10 ? value = 10.0 : value = value;
-                  mqttClient.sendMessage('$userId/$serialNum/app',
-                      '${func}_speed:${value.toInt()}');
-                  context.read<IepPageControll>().setPurSpeed(value);
-                },
-              ),
-            ],
-          ),
+            );
+          }),
           ControllCardWidget(
             height: 285,
             width: 400,
@@ -897,10 +919,12 @@ Future<dynamic> myTimePickerDialog(
                   str: '確認',
                   color: const Color(0xff5bc1c9),
                   onPressed: () {
-                    mqttClient.sendMessage(
-                        '$userId/$serialNum/app', '${func}_time:$setTime');
-                    context.read<IepPageControll>().setTime(func, setTime);
-                    Navigator.pop(context);
+                    if (setTime != 0) {
+                      mqttClient.sendMessage(
+                          '$userId/$serialNum/app', '${func}_time:$setTime');
+                      context.read<IepPageControll>().setTime(func, setTime);
+                      Navigator.pop(context);
+                    }
                   }),
               BlackButton(
                 str: '取消',

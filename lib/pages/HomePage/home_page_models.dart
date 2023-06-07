@@ -63,13 +63,19 @@ class HomePageControll with ChangeNotifier {
                 if (msg != null) {
                   if (msg == 'remove') {
                     removeBtn(dataList['serialNum']);
+                    mqttClient.sendMessage(
+                        '$userId/${dataList['serialNum']}/app', 'delete');
                   } else if (msg.startsWith('reName:')) {
                     String name = msg.replaceAll('reName:', '');
                     reNamedBtn(dataList['serialNum'], name);
-                  } else if (msg == 'turnOff') {
+                  } else if (msg == 'shutDown') {
+                    LoadingDialog.show(homeContext!, '設備關閉中');
                     deviceIEP.updateMainPower(false);
                     mqttClient.sendMessage(
-                        '$userId/${dataList['serialNum']}/app', 'powerOff');
+                        '$userId/${dataList['serialNum']}/app', 'shutDown');
+                    Timer(const Duration(seconds: 3), () {
+                      LoadingDialog.hide(homeContext!);
+                    });
                   }
                 }
               },
@@ -97,7 +103,7 @@ class HomePageControll with ChangeNotifier {
         owner: userId,
         img: 'assets/deviceImg/IEP1.png',
         onPressed: (val) async {
-          if (val) {
+          if (!val) {
             CustomSnackBar.show(homeContext!, '設備未連線');
           }
           await Navigator.push(
@@ -115,13 +121,15 @@ class HomePageControll with ChangeNotifier {
               if (msg != null) {
                 if (msg == 'remove') {
                   removeBtn(newDeviceInfo['serialNum']);
+                  mqttClient.sendMessage(
+                      '$userId/${newDeviceInfo['serialNum']}/app', 'delete');
                 } else if (msg.startsWith('reName:')) {
                   String name = msg.replaceAll('reName:', '');
                   reNamedBtn(newDeviceInfo['serialNum'], name);
-                } else if (msg == 'powerOff') {
+                } else if (msg == 'shutDown') {
                   deviceIEP.updateMainPower(false);
                   mqttClient.sendMessage(
-                      '$userId/${newDeviceInfo['serialNum']}/app', 'turnOff');
+                      '$userId/${newDeviceInfo['serialNum']}/app', 'shutDown');
                 }
               }
             },

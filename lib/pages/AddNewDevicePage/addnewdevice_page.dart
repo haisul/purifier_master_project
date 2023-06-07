@@ -8,19 +8,35 @@ import 'package:purmaster/pages/AddNewDevicePage/addnewdevice_page_models.dart';
 
 ////////////////////PageMain////////////////////
 
-class AddNewDevicePage extends StatelessWidget {
+class AddNewDevicePage extends StatefulWidget {
   const AddNewDevicePage({super.key});
+
+  @override
+  State<AddNewDevicePage> createState() => _AddNewDevicePageState();
+}
+
+class _AddNewDevicePageState extends State<AddNewDevicePage> {
   final List<Widget> curPageList = const [
     DeviceChoisePage(),
     DeviceSetNamePage(),
     DeviceSetWifiPage(),
     DeviceConnectPage()
   ];
+
+  final AddNewDevicePageControll addNewDevicePageControll =
+      AddNewDevicePageControll();
+
+  @override
+  void dispose() {
+    addNewDevicePageControll.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AddNewDevicePageControll()),
+        ChangeNotifierProvider.value(value: addNewDevicePageControll),
         ChangeNotifierProvider(
             create: (_) => InnerPageControll(curPageList: curPageList)),
       ],
@@ -422,10 +438,10 @@ class _DeviceSetWifiPageState extends State<DeviceSetWifiPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      bool wifiState =
-          Provider.of<AddNewDevicePageControll>(context, listen: false)
-              .wifiState;
-      wifiState != true ? CustomSnackBar.show(context, '請開啟WIFI無線網路') : null;
+      if (!Provider.of<AddNewDevicePageControll>(context, listen: false)
+          .wifiState) {
+        CustomSnackBar.show(context, '請開啟WIFI無線網路');
+      }
     });
   }
 
@@ -516,16 +532,17 @@ class _DeviceSetWifiPageState extends State<DeviceSetWifiPage> {
                     onPressed: () => AppSettings.openWIFISettings(),
                   ),
                   NormalButton(
-                      str: '下一步',
-                      onPressed: () {
-                        bool wifiState = Provider.of<AddNewDevicePageControll>(
-                                context,
-                                listen: false)
-                            .wifiState;
-                        wifiState != true
-                            ? CustomSnackBar.show(context, '請開啟WIFI無線網路')
-                            : startSmartConfig();
-                      }),
+                    str: '下一步',
+                    onPressed: () {
+                      if (!Provider.of<AddNewDevicePageControll>(context,
+                              listen: false)
+                          .wifiState) {
+                        CustomSnackBar.show(context, '請開啟WIFI無線網路');
+                      } else {
+                        startSmartConfig();
+                      }
+                    },
+                  ),
                 ],
               )),
         ],
@@ -548,9 +565,7 @@ class _DeviceConnectPageState extends State<DeviceConnectPage> {
   int count = 0;
   Timer? timer;
 
-  @override
-  void initState() {
-    super.initState();
+  void startPairing() {
     context.read<AddNewDevicePageControll>().pairing(context).then((complete) {
       if (complete) {
         try {
@@ -580,6 +595,12 @@ class _DeviceConnectPageState extends State<DeviceConnectPage> {
         });
       }
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    startPairing();
   }
 
   @override

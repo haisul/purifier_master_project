@@ -62,7 +62,6 @@ class LoginPagePageControll with ChangeNotifier {
     mqttClient.userId = userInfo.email;
     await mqttClient.mqttConnect();
     await mqttClient.onMqttCallBack();
-    logger.i(info);
     if (result) {
       return true;
     } else {
@@ -157,7 +156,6 @@ class LoginPagePageControll with ChangeNotifier {
     String? method = await userInfo.loadUserInfo();
     if (method == 'google') {
       googleLoginButton();
-      logger.e(method);
     } else if (method == 'email') {
       emailLoginButton(userInfo.email, userInfo.pass);
       logger.e(method);

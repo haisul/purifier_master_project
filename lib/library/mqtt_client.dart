@@ -46,8 +46,7 @@ class MqttClient {
   String topic = '';
   Map<String, Map<String, dynamic>> serialMap = {};
 
-  String serialNum = '';
-  bool _isConnected = false;
+  bool isConnected = false;
 
   Future loadCaCert() async {
     try {
@@ -61,10 +60,6 @@ class MqttClient {
   }
 
   Future<void> mqttConnect() async {
-    final MqttConnectMessage connMess = MqttConnectMessage()
-        .withClientIdentifier(clientID)
-        .startClean(); // 清除之前的連線狀態
-    client.connectionMessage = connMess;
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult != ConnectivityResult.none) {
       try {
@@ -76,6 +71,7 @@ class MqttClient {
     }
   }
 
+  String serialNum = '';
   Future<void> onMqttCallBack() async {
     try {
       if (client.connectionStatus?.state == MqttConnectionState.connected) {
@@ -91,7 +87,7 @@ class MqttClient {
             addNewDeviceTopic(_userId!, serialNum);
             sendMessage(topic, 'userID:${_userId!}');
           } else if (pt.startsWith('connected')) {
-            _isConnected = true;
+            isConnected = true;
           } else {
             mqttMsgNotifier.value = {'topic': topic, 'msg': pt};
             mqttMsgNotifier.value = {'topic': '', 'msg': ''};
@@ -150,32 +146,6 @@ class MqttClient {
       completer.complete(false);
     }
     return await completer.future;
-  }
-
-  Future<bool> initialConnection(String topic) async {
-    StreamSubscription<bool>? subscription;
-    Completer<bool> completer = Completer<bool>();
-    subscribe(topic, 0);
-
-    Stream<bool> stream = Stream<bool>.periodic(
-            const Duration(milliseconds: 500), (_) => _isConnected)
-        .take(120); //1min
-
-    subscription = stream.listen((isConnected) {
-      if (isConnected) {
-        completer.complete(true);
-        subscription!.cancel();
-      }
-    }, onDone: () {
-      if (!completer.isCompleted) {
-        completer.complete(false);
-      }
-      unSubscribe(topic);
-      _isConnected = false;
-      serialNum = '';
-    });
-
-    return completer.future;
   }
 
   void addNewDeviceTopic(String userId, String serialNum) {

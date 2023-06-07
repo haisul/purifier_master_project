@@ -7,34 +7,28 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class AddNewDevicePageControll with ChangeNotifier {
   AddNewDevicePageControll() {
-    startListening();
-  }
-
-  Wifi wifi = Wifi();
-  String connectMsg = '設備連線中...';
-  String wifiName = '', wifiBssid = '', wifiPass = '';
-  bool wifiState = false;
-  final Map<String, dynamic> _newDeviceMap = {};
-
-  late StreamSubscription<ConnectivityResult> subscription;
-
-  void startListening() {
-    subscription = Connectivity()
+    mqttClient.serialNum = '';
+    mqttClient.isConnected = false;
+    wifiCheckSubscription = Connectivity()
         .onConnectivityChanged
         .listen((ConnectivityResult result) {
+      logger.i(result);
       if (result != ConnectivityResult.wifi) {
         wifiState = false;
       } else {
         wifiState = true;
         getWifiInfo();
       }
-      logger.i(result);
     });
   }
 
-  void stopListening() {
-    subscription.cancel();
-  }
+  late StreamSubscription<ConnectivityResult> wifiCheckSubscription;
+
+  Wifi myWifi = Wifi();
+  String connectMsg = '設備連線中...';
+  String wifiName = '', wifiBssid = '', wifiPass = '';
+  bool wifiState = false;
+  final Map<String, dynamic> _newDeviceMap = {};
 
   void saveName(String name) {
     _newDeviceMap['deviceName'] = name;
@@ -55,16 +49,20 @@ class AddNewDevicePageControll with ChangeNotifier {
   Map<String, dynamic> get getNewDeviceInfo => _newDeviceMap;
 
   Future<void> getWifiInfo() async {
-    await wifi.updateWifiInfo();
-    wifiName = wifi.info['SSID'];
-    wifiBssid = wifi.info['BSSID'];
-
-    notifyListeners();
+    Map<String, dynamic>? wifiInfo = await myWifi.updateWifiInfo();
+    if (wifiInfo != null) {
+      wifiName = wifiInfo['SSID'];
+      wifiBssid = wifiInfo['BSSID'];
+      notifyListeners();
+    } else {
+      await Future.delayed(const Duration(seconds: 1));
+      await getWifiInfo();
+    }
   }
 
+  final espTouch = Provisioner.espTouch();
   Future<bool> pairing(BuildContext context) async {
     Completer<bool> completer = Completer<bool>();
-    final espTouch = Provisioner.espTouch();
     mqttClient.onMqttCallBack();
     espTouch.listen((response) {
       logger.i("Device ($response) is connected to WiFi!");
@@ -78,7 +76,7 @@ class AddNewDevicePageControll with ChangeNotifier {
       logger
           .i('wifiName:$wifiName wifiBssid:$wifiBssid wifiPassword:$wifiPass');
 
-      mqttClient.initialConnection(wifiName).then((value) {
+      initialConnection(wifiName).then((value) {
         if (value) {
           completer.complete(true);
           connectMsg = '連線成功';
@@ -98,13 +96,36 @@ class AddNewDevicePageControll with ChangeNotifier {
     return completer.future;
   }
 
-  Future<void> wifiCheck() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    if (connectivityResult != ConnectivityResult.wifi) {
-      wifiState = false;
-    } else {
-      wifiState = true;
-    }
+  StreamSubscription<bool>? connectSubscription;
+  Future<bool> initialConnection(String topic) async {
+    Completer<bool> completer = Completer<bool>();
+
+    mqttClient.subscribe(topic, 0);
+
+    Stream<bool> stream = Stream<bool>.periodic(
+            const Duration(milliseconds: 500), (_) => mqttClient.isConnected)
+        .take(120); //1min
+
+    connectSubscription = stream.listen((isConnected) {
+      if (isConnected) {
+        completer.complete(true);
+        connectSubscription!.cancel();
+      }
+    }, onDone: () {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
+      mqttClient.unSubscribe(topic);
+    });
+    return completer.future;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    wifiCheckSubscription.cancel();
+    connectSubscription?.cancel();
+    espTouch.stop();
   }
 }
 
