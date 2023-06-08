@@ -80,7 +80,7 @@ class MqttClient {
           final pt =
               MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
           topic = c[0].topic;
-          logger.v('Topic: $topic  Message: $pt');
+          //logger.v('Topic: $topic  Message: $pt');
 
           if (pt.startsWith('serialNum:')) {
             serialNum = pt.replaceAll('serialNum:', '');
@@ -102,7 +102,7 @@ class MqttClient {
   void sendMessage(String topic, String msg) {
     final builder = MqttClientPayloadBuilder();
     builder.addString(msg);
-    client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+    client.publishMessage(topic, MqttQos.exactlyOnce, builder.payload!);
     logger.i('Topic:$topic\nMsg:$msg');
   }
 
@@ -162,7 +162,7 @@ class MqttClient {
 
     serialMap[serialNum] = topicMap;
 
-    subscribe(topicMap['topicEsp'], 1);
+    subscribe(topicMap['topicEsp'], 2);
     subscribe(topicMap['topicPms'], 0);
     subscribe(topicMap['topicTimer'], 0);
     logger.i(topicMap);

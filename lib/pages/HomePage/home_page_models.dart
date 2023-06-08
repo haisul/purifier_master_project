@@ -24,84 +24,44 @@ class HomePageControll with ChangeNotifier {
   Future<void> _getMapFromFirestore() async {
     List<Map<String, dynamic>> dataList = userInfo.deviceList;
     for (int i = 0; i < dataList.length; i++) {
-      _convertJsonToBtn(dataList[i]);
+      convertBtn(dataList[i]);
     }
   }
 
-  void _convertJsonToBtn(dataList) {
-    List<String> wifiSSID = List<String>.from(dataList['wifiSSID']);
-    if (dataList['device']['type'] == 'DeviceIEP') {
-      IepPageControll deviceIEP =
-          IepPageControll(serialNum: dataList['serialNum']);
-      mqttClient.addNewDeviceTopic(
-          dataList['device']['owner'], dataList['serialNum']);
-      mqttClient.sendMessage('$userId/${dataList['serialNum']}/app', 'onApp');
-      deviceBtnList.add(
-        IntoDeviceButton(
-          name: dataList['deviceName'],
-          serialNum: dataList['serialNum'],
-          wifiList: wifiSSID,
-          device: deviceIEP,
-          owner: dataList['device']['owner'],
-          img: dataList['img'],
-          onPressed: (val) async {
-            if (!val) {
-              CustomSnackBar.show(homeContext!, '設備未連線');
-            }
-            await Navigator.push(
-              homeContext!,
-              MaterialPageRoute(
-                builder: (context) => IepPage(
-                  title: dataList['deviceName'],
-                  serialNum: dataList['serialNum'],
-                  iepPageControll: deviceIEP,
-                  userId: dataList['device']['owner'],
-                ),
-              ),
-            ).then(
-              (msg) {
-                if (msg != null) {
-                  if (msg == 'remove') {
-                    removeBtn(dataList['serialNum']);
-                    mqttClient.sendMessage(
-                        '$userId/${dataList['serialNum']}/app', 'delete');
-                  } else if (msg.startsWith('reName:')) {
-                    String name = msg.replaceAll('reName:', '');
-                    reNamedBtn(dataList['serialNum'], name);
-                  } else if (msg == 'shutDown') {
-                    LoadingDialog.show(homeContext!, '設備關閉中');
-                    deviceIEP.updateMainPower(false);
-                    mqttClient.sendMessage(
-                        '$userId/${dataList['serialNum']}/app', 'shutDown');
-                    Timer(const Duration(seconds: 3), () {
-                      LoadingDialog.hide(homeContext!);
-                    });
-                  }
-                }
-              },
-            );
-          },
-        ),
-      );
+  void convertBtn(Map<String, dynamic> deviceInfo) {
+    List<String> wifiSSID = List<String>.from(deviceInfo['wifiSSID']);
+    if (deviceInfo['device']['type'] == 'DeviceIEP') {
+      IepPageControll device =
+          IepPageControll(serialNum: deviceInfo['serialNum']);
+      addBtn(device, deviceInfo, wifiSSID, false);
     }
-    notifyListeners();
   }
 
-  void addBtn(Map<String, dynamic> newDeviceInfo) {
-    List<String> wifiSSID = List<String>.from(newDeviceInfo['wifiSSID']);
-    IepPageControll deviceIEP =
-        IepPageControll(serialNum: newDeviceInfo['serialNum']);
-    mqttClient.addNewDeviceTopic(userId, newDeviceInfo['serialNum']);
-    mqttClient.sendMessage(
-        '$userId/${newDeviceInfo['serialNum']}/app', 'onApp');
+  void createBtn(Map<String, dynamic> deviceInfo) {
+    List<String> wifiSSID = List<String>.from(deviceInfo['wifiSSID']);
+    IepPageControll device =
+        IepPageControll(serialNum: deviceInfo['serialNum']);
+    addBtn(device, deviceInfo, wifiSSID, true);
+    _saveAndUpload();
+  }
+
+  void addBtn(IepPageControll device, Map<String, dynamic> deviceInfo,
+      List<String> wifiSSID, bool create) {
+    String owner = userId;
+    String img = 'assets/deviceImg/IEP1.png';
+    if (!create) {
+      owner = deviceInfo['device']['owner'];
+      img = deviceInfo['img'];
+    }
+
     deviceBtnList.add(
       IntoDeviceButton(
-        name: newDeviceInfo['deviceName'],
-        serialNum: newDeviceInfo['serialNum'],
+        name: deviceInfo['deviceName'],
+        serialNum: deviceInfo['serialNum'],
         wifiList: wifiSSID,
-        device: deviceIEP,
-        owner: userId,
-        img: 'assets/deviceImg/IEP1.png',
+        device: device,
+        owner: owner,
+        img: img,
         onPressed: (val) async {
           if (!val) {
             CustomSnackBar.show(homeContext!, '設備未連線');
@@ -110,9 +70,9 @@ class HomePageControll with ChangeNotifier {
             homeContext!,
             MaterialPageRoute(
               builder: (context) => IepPage(
-                title: newDeviceInfo['deviceName'],
-                serialNum: newDeviceInfo['serialNum'],
-                iepPageControll: deviceIEP,
+                title: deviceInfo['deviceName'],
+                serialNum: deviceInfo['serialNum'],
+                iepPageControll: device,
                 userId: userId,
               ),
             ),
@@ -120,16 +80,20 @@ class HomePageControll with ChangeNotifier {
             (msg) {
               if (msg != null) {
                 if (msg == 'remove') {
-                  removeBtn(newDeviceInfo['serialNum']);
+                  removeBtn(deviceInfo['serialNum']);
                   mqttClient.sendMessage(
-                      '$userId/${newDeviceInfo['serialNum']}/app', 'delete');
+                      '$userId/${deviceInfo['serialNum']}/app', 'delete');
                 } else if (msg.startsWith('reName:')) {
                   String name = msg.replaceAll('reName:', '');
-                  reNamedBtn(newDeviceInfo['serialNum'], name);
+                  reNamedBtn(deviceInfo['serialNum'], name);
                 } else if (msg == 'shutDown') {
-                  deviceIEP.updateMainPower(false);
+                  LoadingDialog.show(homeContext!, '設備關閉中');
+                  device.updateMainPower(false);
                   mqttClient.sendMessage(
-                      '$userId/${newDeviceInfo['serialNum']}/app', 'shutDown');
+                      '$userId/${deviceInfo['serialNum']}/app', 'shutDown');
+                  Timer(const Duration(seconds: 3), () {
+                    LoadingDialog.hide(homeContext!);
+                  });
                 }
               }
             },
@@ -137,9 +101,9 @@ class HomePageControll with ChangeNotifier {
         },
       ),
     );
-
     notifyListeners();
-    _saveAndUpload();
+    mqttClient.addNewDeviceTopic(userId, deviceInfo['serialNum']);
+    mqttClient.sendMessage('$userId/${deviceInfo['serialNum']}/app', 'onApp');
   }
 
   void _saveAndUpload() {
@@ -174,10 +138,10 @@ class HomePageControll with ChangeNotifier {
     Map<String, dynamic> mqttMap = mqttClient.mqttMsgNotifier.value;
     if (mqttMap['topic'] != '' && mqttMap['msg'] != '') {
       for (int i = 0; i < deviceBtnList.length; i++) {
-        logger.w(
-            '$userId/${deviceBtnList[i].serialNum}/esp\nTopic:${mqttMap['topic']}\nMsg:${mqttMap['msg']}');
+        logger.w('Topic:${mqttMap['topic']}\nMsg:${mqttMap['msg']}');
 
         if (mqttMap['topic'] == '$userId/${deviceBtnList[i].serialNum}/esp') {
+          deviceBtnList[i].updateOnline(true);
           switch (mqttMap['msg']) {
             case '#onEsp':
               deviceBtnList[i].updateOnline(true);

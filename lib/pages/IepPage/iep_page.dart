@@ -124,6 +124,7 @@ class IepPage extends StatelessWidget {
                         Expanded(
                           child: Center(
                             child: SliderButton(
+                              disable: !iepPageControll.isConnected,
                               height: 70,
                               width: 250,
                               buttonSize: 55,
@@ -176,36 +177,41 @@ class IepPageAll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          PowerButton(
-            isTurnOn: context.watch<IepPageControll>().functionList[0].state,
-            onPressed: (state) {
-              mqttClient.sendMessage('$userId/$serialNum/app',
-                  '${func}_state:${state ? 'on' : 'off'}');
-              context.read<IepPageControll>().setState(func, state);
-            },
-          ),
-          ControllCardWidget(
-            height: 285,
-            width: 400,
-            title: '運轉時間設定',
-            children: [
-              TimeCountDownDashboard(
-                func: func,
-              ),
-              TimeSetBtn(
-                serialNum: serialNum,
-                userId: userId,
-                func: func,
-              )
-            ],
-          ),
-        ],
-      ),
-    );
+    return Consumer<IepPageControll>(builder: (context, controll, child) {
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            PowerButton(
+              isTurnOn: controll.all.state,
+              onPressed: (state) {
+                mqttClient.sendMessage('$userId/$serialNum/app',
+                    '${func}_state:${state ? 'on' : 'off'}');
+                controll.setState(func, state);
+                callOnOff(context, state: state, time: 5);
+                controll.all.countTime = controll.all.time;
+                controll.allOn(state);
+              },
+            ),
+            ControllCardWidget(
+              height: 285,
+              width: 400,
+              title: '運轉時間設定',
+              children: [
+                TimeCountDownDashboard(
+                  func: func,
+                ),
+                TimeSetBtn(
+                  serialNum: serialNum,
+                  userId: userId,
+                  func: func,
+                )
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -217,104 +223,109 @@ class IepPagePur extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          PowerButton(
-            isTurnOn: context.watch<IepPageControll>().functionList[1].state,
-            onPressed: (state) {
-              mqttClient.sendMessage('$userId/$serialNum/app',
-                  '${func}_state:${state ? 'on' : 'off'}');
-              context.read<IepPageControll>().setState(func, state);
-            },
-          ),
-          ControllCardWidget(
-            height: 160,
-            width: 400,
-            title: '清淨模式',
-            children: [
-              PurModeGroup(
-                mode: context.watch<IepPageControll>().pur.purMode,
-                onSelected: (mode) {
-                  String modeStr = 'Auto';
-                  switch (mode) {
-                    case 0:
-                      modeStr = 'Auto';
-                      break;
-                    case 1:
-                      modeStr = 'Sleep';
-                      break;
-                    case 2:
-                      modeStr = 'Manual';
-                      break;
-                  }
-                  mqttClient.sendMessage(
-                      '$userId/$serialNum/app', '${func}_mode$modeStr');
-                  context.read<IepPageControll>().setPurMode(mode);
-                },
-              ),
-            ],
-          ),
-          Consumer<IepPageControll>(builder: (context, controll, child) {
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              height: controll.pur.purMode != 2 ? 0 : 180.0,
-              curve: Curves.easeInOut,
-              child: SingleChildScrollView(
-                child: ControllCardWidget(
-                  height: 145,
-                  width: 400,
-                  title: '清淨範圍調整',
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 15),
-                      child: Text(
-                        '${context.watch<IepPageControll>().pur.fanSpeed}%',
-                        style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff5bc1c9)),
-                      ),
-                    ),
-                    Slider(
-                      min: 0.0,
-                      max: 100.0,
-                      divisions: 20,
-                      activeColor: const Color(0xff5bc1c9),
-                      inactiveColor: const Color(0x555bc1c9),
-                      value: controll.pur.fanSpeed.toDouble(),
-                      onChanged: (value) => controll.setPurSpeed(value),
-                      onChangeEnd: (value) {
-                        value < 10 ? value = 10.0 : value = value;
-                        mqttClient.sendMessage('$userId/$serialNum/app',
-                            '${func}_speed:${value.toInt()}');
-                        controll.setPurSpeed(value);
-                      },
-                    ),
-                  ],
+    return Consumer<IepPageControll>(builder: (context, controll, child) {
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            PowerButton(
+              isTurnOn: controll.pur.state,
+              disable: controll.all.state == true ? true : false,
+              onPressed: (state) {
+                mqttClient.sendMessage('$userId/$serialNum/app',
+                    '${func}_state:${state ? 'on' : 'off'}');
+                controll.setState(func, state);
+                callOnOff(context, state: state, time: 1);
+                controll.pur.countTime = controll.pur.time;
+              },
+            ),
+            ControllCardWidget(
+              height: 160,
+              width: 400,
+              title: '清淨模式',
+              children: [
+                PurModeGroup(
+                  mode: context.watch<IepPageControll>().pur.purMode,
+                  onSelected: (mode) {
+                    String modeStr = 'Auto';
+                    switch (mode) {
+                      case 0:
+                        modeStr = 'Auto';
+                        break;
+                      case 1:
+                        modeStr = 'Sleep';
+                        break;
+                      case 2:
+                        modeStr = 'Manual';
+                        break;
+                    }
+                    mqttClient.sendMessage(
+                        '$userId/$serialNum/app', '${func}_mode$modeStr');
+                    context.read<IepPageControll>().setPurMode(mode);
+                  },
                 ),
-              ),
-            );
-          }),
-          ControllCardWidget(
-            height: 285,
-            width: 400,
-            title: '運轉時間設定',
-            children: [
-              TimeCountDownDashboard(
-                func: func,
-              ),
-              TimeSetBtn(
-                serialNum: serialNum,
-                userId: userId,
-                func: func,
-              )
-            ],
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+            Consumer<IepPageControll>(builder: (context, controll, child) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                height: controll.pur.purMode != 2 ? 0 : 180.0,
+                curve: Curves.easeInOut,
+                child: SingleChildScrollView(
+                  child: ControllCardWidget(
+                    height: 145,
+                    width: 400,
+                    title: '清淨範圍調整',
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 15),
+                        child: Text(
+                          '${context.watch<IepPageControll>().pur.fanSpeed}%',
+                          style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff5bc1c9)),
+                        ),
+                      ),
+                      Slider(
+                        min: 0.0,
+                        max: 100.0,
+                        divisions: 20,
+                        activeColor: const Color(0xff5bc1c9),
+                        inactiveColor: const Color(0x555bc1c9),
+                        value: controll.pur.fanSpeed.toDouble(),
+                        onChanged: (value) => controll.setPurSpeed(value),
+                        onChangeEnd: (value) {
+                          value < 10 ? value = 10.0 : value = value;
+                          mqttClient.sendMessage('$userId/$serialNum/app',
+                              '${func}_speed:${value.toInt()}');
+                          controll.setPurSpeed(value);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            ControllCardWidget(
+              height: 285,
+              width: 400,
+              title: '運轉時間設定',
+              children: [
+                TimeCountDownDashboard(
+                  func: func,
+                ),
+                TimeSetBtn(
+                  serialNum: serialNum,
+                  userId: userId,
+                  func: func,
+                )
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -326,36 +337,41 @@ class IepPageFog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          PowerButton(
-            isTurnOn: context.watch<IepPageControll>().functionList[2].state,
-            onPressed: (state) {
-              mqttClient.sendMessage('$userId/$serialNum/app',
-                  '${func}_state:${state ? 'on' : 'off'}');
-              context.read<IepPageControll>().setState(func, state);
-            },
-          ),
-          ControllCardWidget(
-            height: 285,
-            width: 400,
-            title: '運轉時間設定',
-            children: [
-              TimeCountDownDashboard(
-                func: func,
-              ),
-              TimeSetBtn(
-                serialNum: serialNum,
-                userId: userId,
-                func: func,
-              )
-            ],
-          ),
-        ],
-      ),
-    );
+    return Consumer<IepPageControll>(builder: (context, controll, child) {
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            PowerButton(
+              isTurnOn: controll.fog.state,
+              disable: controll.all.state == true ? true : false,
+              onPressed: (state) {
+                mqttClient.sendMessage('$userId/$serialNum/app',
+                    '${func}_state:${state ? 'on' : 'off'}');
+                controll.setState(func, state);
+                callOnOff(context, state: state, time: 2);
+                controll.fog.countTime = controll.fog.time;
+              },
+            ),
+            ControllCardWidget(
+              height: 285,
+              width: 400,
+              title: '運轉時間設定',
+              children: [
+                TimeCountDownDashboard(
+                  func: func,
+                ),
+                TimeSetBtn(
+                  serialNum: serialNum,
+                  userId: userId,
+                  func: func,
+                )
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -367,36 +383,41 @@ class IepPageUvc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          PowerButton(
-            isTurnOn: context.watch<IepPageControll>().functionList[3].state,
-            onPressed: (state) {
-              mqttClient.sendMessage('$userId/$serialNum/app',
-                  '${func}_state:${state ? 'on' : 'off'}');
-              context.read<IepPageControll>().setState(func, state);
-            },
-          ),
-          ControllCardWidget(
-            height: 285,
-            width: 400,
-            title: '運轉時間設定',
-            children: [
-              TimeCountDownDashboard(
-                func: func,
-              ),
-              TimeSetBtn(
-                serialNum: serialNum,
-                userId: userId,
-                func: func,
-              )
-            ],
-          ),
-        ],
-      ),
-    );
+    return Consumer<IepPageControll>(builder: (context, controll, child) {
+      return SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            PowerButton(
+              isTurnOn: controll.uvc.state,
+              disable: controll.all.state == true ? true : false,
+              onPressed: (state) {
+                mqttClient.sendMessage('$userId/$serialNum/app',
+                    '${func}_state:${state ? 'on' : 'off'}');
+                controll.setState(func, state);
+                callOnOff(context, state: state, time: 5);
+                controll.uvc.countTime = controll.uvc.time;
+              },
+            ),
+            ControllCardWidget(
+              height: 285,
+              width: 400,
+              title: '運轉時間設定',
+              children: [
+                TimeCountDownDashboard(
+                  func: func,
+                ),
+                TimeSetBtn(
+                  serialNum: serialNum,
+                  userId: userId,
+                  func: func,
+                )
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

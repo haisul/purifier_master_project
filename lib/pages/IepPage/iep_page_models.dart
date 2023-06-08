@@ -5,6 +5,7 @@ import 'dart:async';
 
 class IepPageControll with ChangeNotifier {
   bool mainPower = false;
+  bool isConnected = false;
 
   String serialNum;
   late Map<String, double> pms;
@@ -22,6 +23,11 @@ class IepPageControll with ChangeNotifier {
 
   void updateMainPower(bool val) {
     mainPower = val;
+    notifyListeners();
+  }
+
+  void updateOnline(bool val) {
+    isConnected = val;
     notifyListeners();
   }
 
@@ -45,9 +51,10 @@ class IepPageControll with ChangeNotifier {
 
   void pmsJsonConvert(msg) {
     final Map<String, dynamic> pmsMap = json.decode(msg);
-    pms['pm25'] = pmsMap['pm25'].toDouble();
-    pms['temp'] = pmsMap['temp'].toDouble();
-    pms['rhum'] = pmsMap['rhum'].toDouble();
+    pms['pm25'] = double.parse(pmsMap['pm25']);
+    pms['temp'] = double.parse(pmsMap['temp']);
+    pms['rhum'] = double.parse(pmsMap['rhum']);
+
     notifyListeners();
   }
 
@@ -87,6 +94,16 @@ class IepPageControll with ChangeNotifier {
     val < 10 ? val = 10.0 : val = val;
     pur.fanSpeed = val.toInt();
     notifyListeners();
+  }
+
+  void allOn(bool val) {
+    if (val) {
+      for (int i = 1; i < 4; i++) {
+        functionList[i].state = false;
+        _timerStart(functionList[i].name);
+      }
+      notifyListeners();
+    }
   }
 
   void _timerStart(String funcName) {

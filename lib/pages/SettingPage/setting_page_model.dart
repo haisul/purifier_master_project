@@ -28,7 +28,7 @@ class SettingPageControll with ChangeNotifier {
       myListBtnsShare.add(
         ListButton(
           name: dataList['deviceName'],
-          icon1: Icons.abc,
+          icon1: Icons.share,
           icon2: Icons.arrow_forward_ios_outlined,
           onPress: () => callShareDevice(settingContext).then((value) => null),
         ),
@@ -54,7 +54,7 @@ class SettingPageControll with ChangeNotifier {
       myListBtnsWifi.add(
         ListButton(
             name: dataList['deviceName'],
-            icon1: Icons.abc,
+            icon1: Icons.wifi,
             icon2: Icons.arrow_forward_ios_outlined,
             onPress: () {
               List<String> wifiSSID = List<String>.from(dataList['wifiSSID']);

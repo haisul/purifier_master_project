@@ -53,7 +53,6 @@ class _HomePageState extends State<HomePage> {
                       context: context,
                       title: '淨化大師',
                       settingButton: true,
-                      userName: userInfo.name,
                       onPressed: () {
                         Navigator.push(
                             context,
@@ -63,20 +62,28 @@ class _HomePageState extends State<HomePage> {
                       },
                     )),
               ),
-              Align(
+              Container(
+                padding: const EdgeInsets.only(left: 15, right: 15),
                 alignment: Alignment.topCenter,
                 child: Column(
                   children: [
                     Container(
                       height: MediaQuery.of(context).size.height * 0.15,
                     ),
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'Hi! ${userInfo.name}    ',
+                        style: const TextStyle(
+                            fontSize: 12, color: Color.fromARGB(180, 0, 0, 0)),
+                      ),
+                    ),
                     const WeatherCard(),
                     SingleChildScrollView(
                       child: Column(
-                        children: const [
-                          //.....here is appBody
-                          HomePageInner()
-                        ],
+                        children: const [HomePageInner()],
                       ),
                     )
                   ],
@@ -100,9 +107,10 @@ class WeatherCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CardWidget(
-        width: 320,
+        width: null,
         height: 150,
-        padding: const EdgeInsets.all(0),
+        margin: const EdgeInsets.only(top: 10, bottom: 30),
+        padding: const EdgeInsets.all(10),
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -148,6 +156,7 @@ class WeatherCard extends StatelessWidget {
                             style: const TextStyle(fontSize: 10),
                           ),
                           IconButton(
+                            splashRadius: 1,
                             padding: const EdgeInsets.all(0),
                             iconSize: 20,
                             onPressed: () => context
@@ -202,11 +211,11 @@ class HomePageInner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 340,
+      width: null,
       height: MediaQuery.of(context).size.height * 0.5,
       child: GridView.count(
         primary: false,
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+        padding: const EdgeInsets.only(top: 0, bottom: 0),
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
         crossAxisCount: 2,
@@ -219,7 +228,7 @@ class HomePageInner extends StatelessWidget {
                 if (value != null) {
                   context
                       .read<HomePageControll>()
-                      .addBtn(value as Map<String, dynamic>);
+                      .createBtn(value as Map<String, dynamic>);
                 }
               });
             },

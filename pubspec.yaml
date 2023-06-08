@@ -115,6 +115,7 @@ flutter:
     - assets/manual_on.png
 
     - assets/deviceImg/IEP1.png
+    - assets/deviceImg/iep_icon.png
     
     - assets/CAfiles/emqxsl-ca.crt
 

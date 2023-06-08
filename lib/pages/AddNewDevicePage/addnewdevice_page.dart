@@ -183,18 +183,21 @@ class IEPInnerPage extends StatelessWidget {
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機2',
+                    img: 'assets/deviceImg/IEP1.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機2'),
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機3',
+                    img: 'assets/deviceImg/IEP1.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機3'),
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機Lite',
+                    img: 'assets/deviceImg/IEP1.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機Lite'),

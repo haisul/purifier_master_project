@@ -66,7 +66,9 @@ class ListButton extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        name,
+                        limitText(name, 12),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -291,25 +293,18 @@ class IntoDeviceButton extends StatelessWidget {
             maxLines: 2,
           );
         });
-
     var onlineState = ValueListenableBuilder(
         valueListenable: onlineNotifier!,
         builder: (context, val, child) {
-          return Positioned(
-            top: 70,
-            left: 115,
-            child: Icon(
-              Icons.cloud_done_outlined,
-              color: val != true
-                  ? const Color(0xffcccccc)
-                  : const Color.fromARGB(255, 100, 170, 255),
-              size: 20,
-            ),
+          return Icon(
+            Icons.cloud_done_outlined,
+            color: val != true
+                ? const Color(0xffcccccc)
+                : const Color.fromARGB(255, 100, 170, 255),
+            size: 20,
           );
         });
     return Container(
-      height: 100,
-      width: 150,
       decoration: BoxDecoration(
         color: const Color(0xffffffff),
         borderRadius: const BorderRadius.all(Radius.circular(10)),
@@ -325,7 +320,7 @@ class IntoDeviceButton extends StatelessWidget {
       child: TextButton(
         style: ButtonStyle(
           padding: MaterialStateProperty.all<EdgeInsets>(
-            const EdgeInsets.all(0), // 调整padding
+            const EdgeInsets.all(10), // 调整padding
           ),
           overlayColor: MaterialStateProperty.all<Color>(
               const Color.fromARGB(60, 90, 90, 90)),
@@ -338,30 +333,31 @@ class IntoDeviceButton extends StatelessWidget {
         onPressed: () => onPressed(onlineNotifier!.value),
         child: Stack(
           children: [
-            Positioned(
-              top: 20,
-              left: 10,
-              child: SizedBox(
-                height: 60,
-                width: 60,
-                child: Image.asset(
-                  img,
-                  fit: BoxFit.cover,
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      img,
+                      fit: BoxFit.fitHeight,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Positioned(
-              top: 32.5,
-              left: 80,
-              child: SizedBox(
-                width: 65,
-                height: 35,
-                child: Center(
-                  child: btnName,
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: btnName,
+                  ),
                 ),
-              ),
+              ],
             ),
-            onlineState,
+            Align(
+              alignment: Alignment.bottomRight,
+              child: onlineState,
+            ),
           ],
         ),
       ),
@@ -587,9 +583,11 @@ class GoogleButton extends StatelessWidget {
 class PowerButton extends StatefulWidget {
   void Function(bool) onPressed;
   bool isTurnOn;
+  bool disable;
   PowerButton({
     super.key,
     this.isTurnOn = false,
+    this.disable = false,
     required this.onPressed,
   });
 
@@ -633,9 +631,11 @@ class _PowerButtonState extends State<PowerButton> {
       ),
       child: TextButton(
         onPressed: () {
-          widget.isTurnOn = !widget.isTurnOn;
-          changeState();
-          widget.onPressed(widget.isTurnOn);
+          if (!widget.disable) {
+            widget.isTurnOn = !widget.isTurnOn;
+            changeState();
+            widget.onPressed(widget.isTurnOn);
+          }
         },
         style: ButtonStyle(
           overlayColor: MaterialStateProperty.all<Color>(
@@ -709,139 +709,113 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
   bool returnButton;
   bool settingButton;
   bool popupButton;
-  String? userName;
-  PurMasterAppBar(
-      {super.key,
-      required this.context,
-      required this.title,
-      this.onPressed,
-      this.centerTitle = false,
-      this.returnButton = false,
-      this.settingButton = false,
-      this.popupButton = false,
-      this.userName});
+
+  PurMasterAppBar({
+    super.key,
+    required this.context,
+    required this.title,
+    this.onPressed,
+    this.centerTitle = false,
+    this.returnButton = false,
+    this.settingButton = false,
+    this.popupButton = false,
+  });
 
   final BuildContext context;
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      toolbarHeight: 130,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      flexibleSpace: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(0),
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage('assets/appBar.png'), fit: BoxFit.fitWidth),
-            ),
-          ),
-          Container(
-            height: null,
-            width: null,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0x00ffffff), Color(0xffffffff)],
-                stops: [0.5, 1.0],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
+    var returnBtn = IconButton(
+        icon: const Icon(
+          Icons.arrow_back,
+          size: 30,
+          color: Color.fromARGB(180, 0, 0, 0),
+        ),
+        onPressed: onPressed);
+    var settingBtn = IconButton(
+        icon: const Icon(
+          Icons.settings,
+          size: 30,
+          color: Color.fromARGB(180, 0, 0, 0),
+        ),
+        onPressed: onPressed);
+    var popupBtn = IconButton(
+      onPressed: () {
+        callPopup(context);
+      },
+      icon: const Icon(
+        Icons.more_vert,
+        color: Color.fromARGB(180, 0, 0, 0),
       ),
-      title: SizedBox(
-        height: 130,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
+    );
+
+    return AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 130,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Stack(
           children: [
-            SizedBox(
-              height: 50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (!returnButton)
-                    const SizedBox(
-                      height: 50,
-                      width: 50,
-                    ),
-                  if (returnButton)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            size: 30,
-                            color: Color.fromARGB(180, 0, 0, 0),
-                          ),
-                          onPressed: onPressed),
-                    ),
-                  if (settingButton)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                          icon: const Icon(
-                            Icons.settings,
-                            size: 30,
-                            color: Color.fromARGB(180, 0, 0, 0),
-                          ),
-                          onPressed: onPressed),
-                    ),
-                  if (popupButton)
-                    IconButton(
-                      onPressed: () {
-                        callPopup(context);
-                      },
-                      icon: const Icon(
-                        Icons.more_vert,
-                        color: Color.fromARGB(180, 0, 0, 0),
-                      ),
-                    )
-                ],
+            Container(
+              padding: const EdgeInsets.all(0),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage('assets/appBar.png'),
+                    fit: BoxFit.fitWidth),
               ),
             ),
-            Row(
-              mainAxisAlignment: centerTitle == false
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.center,
-              children: [
-                if (!centerTitle) //如果不置中，取消width:30的box
-                  const SizedBox(
-                    width: 30,
-                  ),
-                Text(
-                  title,
+            Container(
+              height: null,
+              width: null,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0x00ffffff), Color(0xffffffff)],
+                  stops: [0.5, 1.0],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ],
+        ),
+        title: SizedBox(
+          height: 120,
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 40,
+                width: double.infinity,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (!returnButton) Container(),
+                    if (returnButton) returnBtn,
+                    if (settingButton) settingBtn,
+                    if (popupButton) popupBtn,
+                  ],
+                ),
+              ),
+              Container(
+                height: 40,
+                width: double.infinity,
+                alignment: centerTitle == false
+                    ? Alignment.centerLeft
+                    : Alignment.center,
+                child: Text(
+                  '   $title',
                   style: const TextStyle(
                     color: Color.fromARGB(180, 0, 0, 0),
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 10,
                   ),
                 ),
-              ],
-            ),
-            if (userName != null)
-              SizedBox(
-                height: 30,
-                width: double.infinity,
-                child: Container(
-                  padding: const EdgeInsets.only(left: 30, right: 30),
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    'Hi!  $userName',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color.fromARGB(180, 0, 0, 0),
-                    ),
-                  ),
-                ),
               ),
-          ],
-        ),
-      ),
-    );
+            ],
+          ),
+        ));
   }
 
   @override
@@ -849,7 +823,7 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class CardWidget extends StatelessWidget {
-  double width;
+  double? width;
   double height;
   //double margin;
   //double padding;
@@ -944,6 +918,7 @@ class CallDialog extends StatelessWidget {
                   )
                 : null,
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: children,
             ),
           ),
@@ -1388,4 +1363,51 @@ Future<dynamic> callPopup(BuildContext context) {
       ],
     ),
   );
+}
+
+Future<dynamic> callOnOff(BuildContext context,
+    {required bool state, required int time}) {
+  Timer.periodic(Duration(seconds: time), (timer) {
+    Navigator.pop(context);
+    timer.cancel();
+  });
+  return showDialog(
+      context: context,
+      builder: (context) => CallDialog(
+            width: 320,
+            height: 500,
+            noBackground: true,
+            children: [
+              if (state)
+                const Text(
+                  '設備啟動中',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xffffffff),
+                    letterSpacing: 10,
+                  ),
+                ),
+              if (!state)
+                const Text(
+                  '設備關閉中',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xffffffff),
+                    letterSpacing: 10,
+                  ),
+                ),
+            ],
+          ));
+}
+
+String limitText(String text, int maxLength) {
+  if (text.length <= maxLength) {
+    return text;
+  } else {
+    return '${text.substring(0, maxLength)}...';
+  }
 }
