@@ -1033,16 +1033,16 @@ class _PasswordInputState extends State<PasswordInput> {
 
 class CustomSnackBar {
   static void show(BuildContext context, String message,
-      {String level = 'error', int time = 3}) {
+      {int level = 2, int time = 3}) {
     Color myColor;
     switch (level) {
-      case 'info':
+      case 0:
         myColor = const Color.fromARGB(255, 100, 170, 255);
         break;
-      case 'warring':
+      case 1:
         myColor = const Color.fromARGB(255, 255, 200, 100);
         break;
-      case 'error':
+      case 2:
         myColor = const Color.fromARGB(255, 255, 100, 100);
         break;
       default:

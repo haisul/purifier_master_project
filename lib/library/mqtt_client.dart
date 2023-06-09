@@ -22,6 +22,7 @@ class MqttClient {
       client.logging(on: false);
       client.keepAlivePeriod = 30; // 保持連線的時間間隔（秒）
       client.autoReconnect = true; // 啟用自動重連
+      client.onDisconnected = onDisconnected;
 
       final MqttConnectMessage connMess = MqttConnectMessage()
           .withClientIdentifier(clientID)
@@ -29,6 +30,7 @@ class MqttClient {
       client.connectionMessage = connMess;
       mqttMsgNotifier =
           ValueNotifier<Map<String, dynamic>>({'topic': '', 'msg': ''});
+      connectedNotifier = ValueNotifier<bool>(false);
     } catch (e) {
       logger.e(e);
     }
@@ -43,6 +45,7 @@ class MqttClient {
   }
 
   late ValueNotifier<Map<String, dynamic>> mqttMsgNotifier;
+  late ValueNotifier<bool> connectedNotifier;
   String topic = '';
   Map<String, Map<String, dynamic>> serialMap = {};
 
@@ -59,11 +62,16 @@ class MqttClient {
     }
   }
 
+  void onDisconnected() {
+    connectedNotifier.value = false;
+  }
+
   Future<void> mqttConnect() async {
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult != ConnectivityResult.none) {
       try {
         await client.connect(userName, pass);
+        connectedNotifier.value = true;
         logger.i('mqtt connect success');
       } catch (e) {
         logger.e('mqtt connect error');
@@ -164,7 +172,7 @@ class MqttClient {
 
     subscribe(topicMap['topicEsp'], 2);
     subscribe(topicMap['topicPms'], 0);
-    subscribe(topicMap['topicTimer'], 0);
+    subscribe(topicMap['topicTimer'], 2);
     logger.i(topicMap);
   }
 

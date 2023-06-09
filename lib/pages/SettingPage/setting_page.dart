@@ -138,13 +138,17 @@ class ServiceChoise extends StatelessWidget implements NameWidget {
                     icon1: Icons.ios_share,
                     icon2: Icons.chevron_right,
                     onPress: () =>
-                        context.read<InnerPageControll>().gotoPage(2)),
+                        //context.read<InnerPageControll>().gotoPage(2)),
+                        CustomSnackBar.show(context, '尚未新增此功能\n敬請期待',
+                            level: 0)),
                 ListButton(
                     name: '分享設備',
                     icon1: Icons.share,
                     icon2: Icons.chevron_right,
                     onPress: () =>
-                        context.read<InnerPageControll>().gotoPage(3)),
+                        //context.read<InnerPageControll>().gotoPage(3)),
+                        CustomSnackBar.show(context, '尚未新增此功能\n敬請期待',
+                            level: 0)),
                 ListButton(
                     name: '網路管理',
                     icon1: Icons.wifi,
@@ -156,7 +160,9 @@ class ServiceChoise extends StatelessWidget implements NameWidget {
                     icon1: Icons.notifications_active_outlined,
                     icon2: Icons.chevron_right,
                     onPress: () =>
-                        context.read<InnerPageControll>().gotoPage(5)),
+                        //context.read<InnerPageControll>().gotoPage(5)),
+                        CustomSnackBar.show(context, '尚未新增此功能\n敬請期待',
+                            level: 0)),
                 ListButton(
                     name: '登出',
                     icon1: Icons.logout_outlined,
@@ -201,7 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
       File file = File(image.path);
       userInfo.updateUserImg(file, userInfo.email).then((value) {
         Provider.of<InnerPageControll>(context, listen: false).gotoPage(0);
-        CustomSnackBar.show(context, '變更完成', level: 'info', time: 5);
+        CustomSnackBar.show(context, '變更完成', level: 0, time: 5);
       });
     }
   }

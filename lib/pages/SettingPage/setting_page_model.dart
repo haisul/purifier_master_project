@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:purmaster/pages/SettingPage/setting_page.dart';
 import 'package:purmaster/main_models.dart';
@@ -49,31 +51,25 @@ class SettingPageControll with ChangeNotifier {
     notifyListeners();
   }
 
-  void _convertJsonToBtnWifi(dataList, int i) {
-    if (dataList['device']['owner'] == userInfo.email) {
+  void _convertJsonToBtnWifi(Map<String, dynamic> data, int i) {
+    if (data['device']['owner'] == userInfo.email) {
       myListBtnsWifi.add(
         ListButton(
-            name: dataList['deviceName'],
+            name: data['deviceName'],
             icon1: Icons.wifi,
             icon2: Icons.arrow_forward_ios_outlined,
             onPress: () {
-              List<String> wifiSSID = List<String>.from(dataList['wifiSSID']);
-              callAddDeviceWifi(
-                      settingContext, dataList['deviceName'], wifiSSID)
-                  .then((value) {
+              List<String> wifiSSID = List<String>.from(data['wifiSSID']);
+              callAddDeviceWifi(settingContext, data).then((value) {
                 if (value != null) {
                   List<Map<String, dynamic>> deviceList = userInfo.deviceList;
-                  String topic =
-                      '${deviceList[i]['owner']}/${deviceList[i]['serialNum']}/wifi';
                   String msg = value;
                   if (msg.startsWith('remove:')) {
                     msg = msg.replaceAll('remove:', '');
-                    logger.e(msg);
                     wifiSSID.remove(msg);
                   } else {
                     wifiSSID.add(msg);
                   }
-                  mqttClient.sendMessage(topic, wifiSSID.toString());
                   deviceList[i]['wifiSSID'] = wifiSSID;
                   userInfo.uploadFirebase(deviceList, userInfo.email);
                 }
@@ -164,7 +160,7 @@ class _ChangeNameState extends State<ChangeName> {
           onPressed: () {
             if (giveName != null) {
               userInfo.updateUserName(giveName!);
-              CustomSnackBar.show(context, '變更完成', level: 'info', time: 5);
+              CustomSnackBar.show(context, '變更完成', level: 0, time: 5);
               Navigator.pop(context, true);
             } else {
               CustomSnackBar.show(context, '請輸入完整資訊');
@@ -482,18 +478,18 @@ Future<dynamic> callRemoveShareDevice(BuildContext context, String deviceName) {
 }
 
 class AddDeviceWifi extends StatefulWidget {
-  final String deviceName;
-  final List<String> wifiSSID;
-  const AddDeviceWifi(
-      {super.key, required this.deviceName, required this.wifiSSID});
+  final Map<String, dynamic> data;
+  const AddDeviceWifi({super.key, required this.data});
 
   @override
   _AddDeviceWifiState createState() => _AddDeviceWifiState();
 }
 
 class _AddDeviceWifiState extends State<AddDeviceWifi> {
+  late final Map<String, dynamic> data;
   late String deviceName;
   late List<String> wifiSSID;
+
   List<ListButtonPlus> wifiBtns = [];
 
   int index = 0;
@@ -515,8 +511,9 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
   @override
   void initState() {
     super.initState();
-    deviceName = widget.deviceName;
-    wifiSSID = widget.wifiSSID;
+    data = widget.data;
+    deviceName = data['deviceName'] as String;
+    wifiSSID = List<String>.from(data['wifiSSID']);
 
     for (int i = 0; i < wifiSSID.length; i++) {
       wifiBtns.add(
@@ -526,6 +523,9 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
           icon2: Icons.arrow_drop_down,
           underline: false,
           onPressed: () {
+            String topic =
+                '${data['device']['owner']}/${data['serialNum']}/wifi';
+            mqttClient.sendMessage(topic, 'D${wifiSSID[i]}');
             Navigator.of(context).pop('remove:${wifiSSID[i]}');
           },
         ),
@@ -619,7 +619,15 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
                   onPressed: () {
                     if (newSSID != null && newPass != null) {
                       if (newPass!.length >= 8) {
-                        CustomSnackBar.show(context, '新增成功', level: 'info');
+                        String topic =
+                            '${data['device']['owner']}/${data['serialNum']}/wifi';
+                        Map<String, dynamic> newWifi = {
+                          'SSID': newSSID,
+                          'PASSWORD': newPass
+                        };
+                        String newWifiStr = jsonEncode(newWifi);
+                        mqttClient.sendMessage(topic, 'A$newWifiStr');
+                        CustomSnackBar.show(context, '新增成功', level: 0);
                         Navigator.of(context).pop(newSSID);
                       } else {
                         CustomSnackBar.show(context, 'WIFI密碼必須大於8位');
@@ -645,7 +653,7 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
         Align(
           alignment: Alignment.topRight,
           child: Text(
-            '$deviceName WiFi清單',
+            '${limitText(deviceName, 8)} WiFi清單',
             style: const TextStyle(fontSize: 20),
           ),
         ),
@@ -656,13 +664,12 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
 }
 
 Future<String?> callAddDeviceWifi(
-    BuildContext context, String deviceName, List<String> wifiSSID) {
+    BuildContext context, Map<String, dynamic> data) {
   return showDialog<String>(
     context: context,
     builder: (context) {
       return AddDeviceWifi(
-        deviceName: deviceName,
-        wifiSSID: wifiSSID,
+        data: data,
       );
     },
   );

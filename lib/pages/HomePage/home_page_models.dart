@@ -17,6 +17,7 @@ class HomePageControll with ChangeNotifier {
       logger.e(e);
     }
     mqttClient.mqttMsgNotifier.addListener(mqttMsgProcess);
+    mqttClient.connectedNotifier.addListener(mqttConnected);
   }
   String userId = userInfo.email;
   List<IntoDeviceButton> deviceBtnList = [];
@@ -48,7 +49,7 @@ class HomePageControll with ChangeNotifier {
   void addBtn(IepPageControll device, Map<String, dynamic> deviceInfo,
       List<String> wifiSSID, bool create) {
     String owner = userId;
-    String img = 'assets/deviceImg/IEP1.png';
+    String img = 'assets/deviceImg/IEP01.png';
     if (!create) {
       owner = deviceInfo['device']['owner'];
       img = deviceInfo['img'];
@@ -142,6 +143,7 @@ class HomePageControll with ChangeNotifier {
 
         if (mqttMap['topic'] == '$userId/${deviceBtnList[i].serialNum}/esp') {
           deviceBtnList[i].updateOnline(true);
+          deviceBtnList[i].device.updateOnline(true);
           switch (mqttMap['msg']) {
             case '#onEsp':
               deviceBtnList[i].updateOnline(true);
@@ -169,6 +171,14 @@ class HomePageControll with ChangeNotifier {
           break;
         }
       }
+    }
+  }
+
+  void mqttConnected() {
+    if (!mqttClient.connectedNotifier.value) {
+      CustomSnackBar.show(homeContext!, '設備連線中斷');
+    } else {
+      CustomSnackBar.show(homeContext!, '設備連線成功');
     }
   }
 

@@ -122,16 +122,16 @@ class LoginPagePageControll with ChangeNotifier {
     userInfo.resetPassword(email).then((value) {
       switch (value) {
         case 0:
-          CustomSnackBar.show(context, '請至信箱收取新密碼', level: 'info');
+          CustomSnackBar.show(context, '請至信箱收取新密碼', level: 0);
           break;
         case 1:
-          CustomSnackBar.show(context, 'e-mail格式錯誤', level: 'error');
+          CustomSnackBar.show(context, 'e-mail格式錯誤');
           return;
         case 2:
-          CustomSnackBar.show(context, '此e-mail尚未註冊', level: 'error');
+          CustomSnackBar.show(context, '此e-mail尚未註冊');
           return;
         default:
-          CustomSnackBar.show(context, '錯誤', level: 'error');
+          CustomSnackBar.show(context, '錯誤');
           return;
       }
 

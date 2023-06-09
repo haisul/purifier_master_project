@@ -176,28 +176,28 @@ class IEPInnerPage extends StatelessWidget {
                 children: [
                   NewDeviceBtn(
                     title: '智能消毒機1',
-                    img: 'assets/deviceImg/IEP1.png',
+                    img: 'assets/deviceImg/IEP01.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機1'),
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機2',
-                    img: 'assets/deviceImg/IEP1.png',
+                    img: 'assets/deviceImg/IEP01.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機2'),
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機3',
-                    img: 'assets/deviceImg/IEP1.png',
+                    img: 'assets/deviceImg/IEP01.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機3'),
                   ),
                   NewDeviceBtn(
                     title: '智能消毒機Lite',
-                    img: 'assets/deviceImg/IEP1.png',
+                    img: 'assets/deviceImg/IEP01.png',
                     onPressed: () => context
                         .read<InnerPageControll>()
                         .intoPage(1, name: '智能消毒機Lite'),
@@ -248,11 +248,17 @@ class EADInnerPage extends StatelessWidget {
                 children: [
                   NewDeviceBtn(
                     title: '免插電\n空氣乾燥機1',
-                    onPressed: () {},
+                    onPressed: () {
+                      CustomSnackBar.show(context, '尚未新增此設備\n敬請期待', level: 0);
+                    },
+                    img: "assets/deviceImg/EAD01.png",
                   ),
                   NewDeviceBtn(
                     title: '免插電\n空氣乾燥機2',
-                    onPressed: () {},
+                    onPressed: () {
+                      CustomSnackBar.show(context, '尚未新增此設備\n敬請期待', level: 0);
+                    },
+                    img: "assets/deviceImg/EAD01.png",
                   ),
                 ],
               ),
@@ -300,11 +306,17 @@ class CPInnerPage extends StatelessWidget {
                 children: [
                   NewDeviceBtn(
                     title: '智能空壓機15HP',
-                    onPressed: () {},
+                    img: "assets/deviceImg/CP01.png",
+                    onPressed: () {
+                      CustomSnackBar.show(context, '尚未新增此設備\n敬請期待', level: 0);
+                    },
                   ),
                   NewDeviceBtn(
                     title: '智能空壓機30HP',
-                    onPressed: () {},
+                    img: "assets/deviceImg/CP01.png",
+                    onPressed: () {
+                      CustomSnackBar.show(context, '尚未新增此設備\n敬請期待', level: 0);
+                    },
                   ),
                 ],
               ),

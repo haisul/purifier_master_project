@@ -63,100 +63,102 @@ class IepPage extends StatelessWidget {
             Consumer2<IepPageControll, InnerPageControll>(
                 builder: (context, iepPageControll, pageController, child) {
               return Positioned(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const DustInfoCard(),
-                      Container(
-                        height: 50,
-                        color: const Color(0xffcccccc),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const DustInfoCard(),
+                    Container(
+                      height: 50,
+                      color: const Color(0xffcccccc),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          IEPFunctionBtn(
+                            title: '全速清淨',
+                            onPressed: () => iepPageControll.mainPower != false
+                                ? pageController.gotoPage(0)
+                                : null,
+                            isSelected: pageController.index == 0,
+                          ),
+                          IEPFunctionBtn(
+                            title: '空氣淨化',
+                            onPressed: () => iepPageControll.mainPower != false
+                                ? pageController.gotoPage(1)
+                                : null,
+                            isSelected: pageController.index == 1,
+                          ),
+                          IEPFunctionBtn(
+                            title: '超音波霧化',
+                            onPressed: () => iepPageControll.mainPower != false
+                                ? pageController.gotoPage(2)
+                                : null,
+                            isSelected: pageController.index == 2,
+                          ),
+                          IEPFunctionBtn(
+                            title: 'UVC滅菌燈',
+                            onPressed: () => iepPageControll.mainPower != false
+                                ? pageController.gotoPage(3)
+                                : null,
+                            isSelected: pageController.index == 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (iepPageControll.mainPower)
+                      Expanded(
+                        child: PageView.builder(
+                          controller: pageController.controll,
+                          itemCount: pageController.curPageList.length,
+                          onPageChanged: pageController.slidePage,
+                          itemBuilder: (context, index) {
+                            return pageController.curPageList[index];
+                          },
+                        ),
+                      ),
+                    if (!iepPageControll.mainPower)
+                      Expanded(
+                        child: Stack(
                           children: [
-                            IEPFunctionBtn(
-                              title: '全速清淨',
-                              onPressed: () =>
-                                  iepPageControll.mainPower != false
-                                      ? pageController.gotoPage(0)
-                                      : null,
-                              isSelected: pageController.index == 0,
+                            Center(
+                              child: SliderButton(
+                                shimmer: true,
+                                height: 70,
+                                width: 250,
+                                buttonSize: 55,
+                                icon: const Icon(
+                                  Icons.power_settings_new,
+                                  color: Color.fromARGB(120, 0, 0, 0),
+                                ),
+                                label: const Text(
+                                  '啟動設備',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color.fromARGB(120, 0, 0, 0),
+                                      letterSpacing: 10),
+                                ),
+                                boxShadow: const BoxShadow(
+                                    blurRadius: 5.0,
+                                    color: Color.fromARGB(120, 0, 0, 0)),
+                                action: () {
+                                  mqttClient.sendMessage(
+                                      '$userId/$serialNum/app', 'turnOn');
+                                  LoadingDialog.show(context, '啟動中');
+                                  iepPageControll.updateMainPower(true);
+                                  Timer(const Duration(seconds: 3), () {
+                                    LoadingDialog.hide(context);
+                                  });
+                                },
+                              ),
                             ),
-                            IEPFunctionBtn(
-                              title: '空氣淨化',
-                              onPressed: () =>
-                                  iepPageControll.mainPower != false
-                                      ? pageController.gotoPage(1)
-                                      : null,
-                              isSelected: pageController.index == 1,
-                            ),
-                            IEPFunctionBtn(
-                              title: '超音波霧化',
-                              onPressed: () =>
-                                  iepPageControll.mainPower != false
-                                      ? pageController.gotoPage(2)
-                                      : null,
-                              isSelected: pageController.index == 2,
-                            ),
-                            IEPFunctionBtn(
-                              title: 'UVC滅菌燈',
-                              onPressed: () =>
-                                  iepPageControll.mainPower != false
-                                      ? pageController.gotoPage(3)
-                                      : null,
-                              isSelected: pageController.index == 3,
-                            ),
+                            if (!iepPageControll.isConnected)
+                              Container(
+                                color: const Color.fromARGB(150, 255, 255, 255),
+                              ),
                           ],
                         ),
                       ),
-                      if (iepPageControll.mainPower)
-                        Expanded(
-                          child: PageView.builder(
-                            controller: pageController.controll,
-                            itemCount: pageController.curPageList.length,
-                            onPageChanged: pageController.slidePage,
-                            itemBuilder: (context, index) {
-                              return pageController.curPageList[index];
-                            },
-                          ),
-                        ),
-                      if (!iepPageControll.mainPower)
-                        Expanded(
-                          child: Center(
-                            child: SliderButton(
-                              disable: !iepPageControll.isConnected,
-                              height: 70,
-                              width: 250,
-                              buttonSize: 55,
-                              icon: const Icon(
-                                Icons.power_settings_new,
-                                color: Color.fromARGB(120, 0, 0, 0),
-                              ),
-                              label: const Text(
-                                '啟動設備',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color.fromARGB(120, 0, 0, 0),
-                                    letterSpacing: 10),
-                              ),
-                              boxShadow: const BoxShadow(
-                                  blurRadius: 5.0,
-                                  color: Color.fromARGB(120, 0, 0, 0)),
-                              action: () {
-                                mqttClient.sendMessage(
-                                    '$userId/$serialNum/app', 'turnOn');
-                                LoadingDialog.show(context, '啟動中');
-                                iepPageControll.updateMainPower(true);
-                                Timer(const Duration(seconds: 3), () {
-                                  LoadingDialog.hide(context);
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               );
             }),
@@ -557,6 +559,7 @@ class DustInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final containerHeight = MediaQuery.of(context).size.height / 4;
     var humdValue = Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.only(right: 20),
@@ -641,13 +644,12 @@ class DustInfoCard extends StatelessWidget {
       ),
     );
     return Container(
-      margin: const EdgeInsets.only(top: 70, bottom: 30),
-      alignment: Alignment.center,
+      margin: const EdgeInsets.only(top: 60, bottom: 30),
       decoration: const BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(112.5)),
       ),
-      height: 225,
-      width: 225,
+      height: containerHeight,
+      width: containerHeight,
       child: Stack(children: [
         Image.asset(
           'assets/dustInfo.png',
