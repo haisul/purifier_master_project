@@ -4,6 +4,7 @@ import 'package:esp_smartconfig/esp_smartconfig.dart';
 import 'package:purmaster/main_models.dart';
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:purmaster/widget/custom_widget.dart';
 
 class AddNewDevicePageControll with ChangeNotifier {
   AddNewDevicePageControll() {
@@ -25,7 +26,6 @@ class AddNewDevicePageControll with ChangeNotifier {
   late StreamSubscription<ConnectivityResult> wifiCheckSubscription;
 
   Wifi myWifi = Wifi();
-  String connectMsg = '設備連線中...';
   String wifiName = '', wifiBssid = '', wifiPass = '';
   bool wifiState = false;
   final Map<String, dynamic> _newDeviceMap = {};
@@ -79,18 +79,18 @@ class AddNewDevicePageControll with ChangeNotifier {
       initialConnection(wifiName).then((value) {
         if (value) {
           completer.complete(true);
-          connectMsg = '連線成功';
           List<String> wifiSSID = [wifiName];
           _newDeviceMap['wifiSSID'] = wifiSSID;
+          CustomSnackBar.show(context, '配對成功', level: 0, time: 2);
         } else {
           completer.complete(false);
-          connectMsg = '連線失敗';
+          CustomSnackBar.show(context, '配對失敗', level: 2, time: 2);
         }
         espTouch.stop();
       });
     } catch (e) {
       completer.complete(false);
-      connectMsg = '連線錯誤\n請檢查SSID及密碼';
+      CustomSnackBar.show(context, '配對失敗', level: 2, time: 2);
     }
     notifyListeners();
     return completer.future;

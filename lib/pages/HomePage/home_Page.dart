@@ -16,12 +16,14 @@ class _HomePageState extends State<HomePage> {
   late HomePageControll homePageControll;
   late WeatherControll weatherControll;
   late SettingPageControll settingPageControll;
+  late UserNameControll userNameControll;
 
   @override
   void initState() {
     super.initState();
     homePageControll = HomePageControll(homeContext: context);
     weatherControll = WeatherControll();
+    userNameControll = UserNameControll();
     reqestPermission.checkLocationPermission().then(
           (value) => value == true ? weatherControll.getWeatherInfo() : null,
         );
@@ -40,6 +42,7 @@ class _HomePageState extends State<HomePage> {
       providers: [
         ChangeNotifierProvider.value(value: homePageControll),
         ChangeNotifierProvider.value(value: weatherControll),
+        ChangeNotifierProvider.value(value: userNameControll),
       ],
       child: Scaffold(
         backgroundColor: const Color(0xffffffff),
@@ -58,7 +61,8 @@ class _HomePageState extends State<HomePage> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => SettingPage(
-                                    settingPageControll: settingPageControll)));
+                                    settingPageControll: settingPageControll,
+                                    userNameControll: userNameControll)));
                       },
                     )),
               ),
@@ -70,16 +74,20 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       height: MediaQuery.of(context).size.height * 0.15,
                     ),
-                    Container(
-                      width: double.infinity,
-                      height: 50,
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Hi! ${userInfo.name}    ',
-                        style: const TextStyle(
-                            fontSize: 12, color: Color.fromARGB(180, 0, 0, 0)),
-                      ),
-                    ),
+                    Consumer<UserNameControll>(
+                        builder: (context, nameControll, child) {
+                      return Container(
+                        width: double.infinity,
+                        height: 50,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Hi! ${nameControll.userName}    ',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              color: Color.fromARGB(180, 0, 0, 0)),
+                        ),
+                      );
+                    }),
                     const WeatherCard(),
                     SingleChildScrollView(
                       child: Column(
@@ -180,7 +188,7 @@ class WeatherCard extends StatelessWidget {
                             size: 30,
                           ),
                           Text(
-                            '${context.watch<WeatherControll>().temp}C',
+                            '${context.watch<WeatherControll>().temp}°C',
                             style: const TextStyle(fontSize: 16),
                           ),
                           const Icon(

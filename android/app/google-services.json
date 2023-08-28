@@ -7,12 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:753864698672:android:a269275e9764844fecf6f5",
+        "mobilesdk_app_id": "1:753864698672:android:fc3a21e85ca50fa3ecf6f5",
         "android_client_info": {
-          "package_name": "com.example.purifier_master_project"
+          "package_name": "tw.purmaster.lj168.www"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "753864698672-47ast4mt15q7ds4ch5f306oiddlfhft6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "tw.purmaster.lj168.www",
+            "certificate_hash": "28c8a92dc2e99c4a5499c5b775ebf7d367824d83"
+          }
+        },
+        {
+          "client_id": "753864698672-mn7u4m6t9pgf8l5jfmjpamp1o9878gqj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "tw.purmaster.lj168.www",
+            "certificate_hash": "14575162a1b7ff8da0e0fa5108248a0a6c8cad5d"
+          }
+        },
         {
           "client_id": "753864698672-atvfpibvmng2p4vajsedufkblkh9c6nt.apps.googleusercontent.com",
           "client_type": 3

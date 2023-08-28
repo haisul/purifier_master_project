@@ -601,7 +601,7 @@ class _DeviceConnectPageState extends State<DeviceConnectPage> {
         });
       } else {
         Timer.periodic(const Duration(seconds: 1), (timer) {
-          if (count > 2) {
+          if (count > 3) {
             count = 0;
             timer.cancel();
             Navigator.pop(context);
@@ -637,10 +637,11 @@ class _DeviceConnectPageState extends State<DeviceConnectPage> {
         Container(
           margin: const EdgeInsets.all(30),
           width: null,
-          child: Text(
-            context.watch<AddNewDevicePageControll>().connectMsg,
-            style: const TextStyle(
+          child: const Text(
+            '配對中 請稍候',
+            style: TextStyle(
               fontSize: 20,
+              fontWeight: FontWeight.bold,
               color: Color.fromARGB(180, 0, 0, 0),
               letterSpacing: 3,
               height: 2,

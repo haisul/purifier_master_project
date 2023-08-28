@@ -13,6 +13,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  WidgetsFlutterBinding.ensureInitialized();
+  notification.initial();
 
   runApp(const MyApp());
 }
@@ -21,13 +23,15 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   void appInitial() async {
-    reqestPermission.requestLocationPermission();
+    await reqestPermission.requestLocationPermission();
+    await reqestPermission.requestNotificationPermission();
     await mqttClient.loadCaCert();
   }
 
   @override
   Widget build(BuildContext context) {
     appInitial();
+
     return MaterialApp(
       title: 'PurMaster',
       theme: ThemeData(

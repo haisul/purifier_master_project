@@ -2,8 +2,10 @@ import 'package:logger/logger.dart';
 import 'package:purmaster/library/mqtt_client.dart';
 import 'package:purmaster/library/request_permission.dart';
 import 'package:purmaster/library/user_information.dart';
+import 'package:purmaster/library/notification.dart';
 
 Logger logger = Logger();
+Notification notification = Notification();
 RequestPermission reqestPermission = RequestPermission();
 UserInformation userInfo = UserInformation();
 MqttClient mqttClient = MqttClient(

@@ -726,6 +726,7 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     var returnBtn = IconButton(
+        padding: const EdgeInsets.all(0),
         icon: const Icon(
           Icons.arrow_back,
           size: 30,
@@ -733,6 +734,7 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         onPressed: onPressed);
     var settingBtn = IconButton(
+        padding: const EdgeInsets.all(0),
         icon: const Icon(
           Icons.settings,
           size: 30,
@@ -740,6 +742,7 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         onPressed: onPressed);
     var popupBtn = IconButton(
+      padding: const EdgeInsets.all(0),
       onPressed: () {
         callPopup(context);
       },
@@ -792,27 +795,43 @@ class PurMasterAppBar extends StatelessWidget implements PreferredSizeWidget {
                   children: [
                     if (!returnButton) Container(),
                     if (returnButton) returnBtn,
+                    if (returnButton)
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              color: Color.fromARGB(180, 0, 0, 0),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 10,
+                            ),
+                          ),
+                        ),
+                      ),
                     if (settingButton) settingBtn,
                     if (popupButton) popupBtn,
                   ],
                 ),
               ),
-              Container(
-                height: 40,
-                width: double.infinity,
-                alignment: centerTitle == false
-                    ? Alignment.centerLeft
-                    : Alignment.center,
-                child: Text(
-                  '   $title',
-                  style: const TextStyle(
-                    color: Color.fromARGB(180, 0, 0, 0),
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 10,
+              if (!returnButton)
+                Container(
+                  height: 40,
+                  width: double.infinity,
+                  alignment: centerTitle == false
+                      ? Alignment.centerLeft
+                      : Alignment.center,
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Color.fromARGB(180, 0, 0, 0),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 10,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ));
@@ -868,7 +887,7 @@ class CardWidget extends StatelessWidget {
 
 class CallDialog extends StatelessWidget {
   final double width;
-  final double height;
+  final double? height;
   final double margin;
   final EdgeInsetsGeometry padding;
   final List<Widget> children;
@@ -876,7 +895,7 @@ class CallDialog extends StatelessWidget {
   const CallDialog(
       {super.key,
       required this.width,
-      required this.height,
+      this.height,
       required this.children,
       this.padding = const EdgeInsets.all(15),
       this.margin = 30,
@@ -918,7 +937,7 @@ class CallDialog extends StatelessWidget {
                   )
                 : null,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: children,
             ),
           ),
@@ -1071,62 +1090,49 @@ class CustomSnackBar {
 }
 
 class LoadingDialog {
-  static Future<void> show(BuildContext context, String str) async {
-    return showDialog<void>(
-      context: context,
+  static Future<dynamic> show(BuildContext context,
+      {required String description, int time = 0}) {
+    if (time != 0) {
+      Timer.periodic(Duration(seconds: time), (timer) {
+        Navigator.pop(context);
+        timer.cancel();
+      });
+    }
+    return showDialog(
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // 設置模糊效果
-                child: Container(
-                  color: Colors.black.withOpacity(0), // 設置半透明黑色背景
+      context: context,
+      builder: (context) => CallDialog(
+        width: 320,
+        noBackground: true,
+        children: [
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(30),
+                  height: 70,
+                  width: 70,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 7,
+                    color: Color.fromARGB(255, 255, 255, 255),
+                  ),
                 ),
-              ),
+                Text(
+                  description,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xffffffff),
+                    letterSpacing: 10,
+                  ),
+                ),
+              ],
             ),
-            Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              child: Container(
-                width: 150,
-                height: 150,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xffffffff),
-                  borderRadius: const BorderRadius.all(Radius.circular(20)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 1, // 陰影擴散程度
-                      blurRadius: 10, // 陰影模糊程度
-                      offset: const Offset(2, 2), // 陰影偏移量
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
-                      color: Color.fromARGB(180, 0, 0, 0),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      str,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color.fromARGB(180, 0, 0, 0),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
@@ -1363,45 +1369,6 @@ Future<dynamic> callPopup(BuildContext context) {
       ],
     ),
   );
-}
-
-Future<dynamic> callOnOff(BuildContext context,
-    {required bool state, required int time}) {
-  Timer.periodic(Duration(seconds: time), (timer) {
-    Navigator.pop(context);
-    timer.cancel();
-  });
-  return showDialog(
-      context: context,
-      builder: (context) => CallDialog(
-            width: 320,
-            height: 500,
-            noBackground: true,
-            children: [
-              if (state)
-                const Text(
-                  '設備啟動中',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xffffffff),
-                    letterSpacing: 10,
-                  ),
-                ),
-              if (!state)
-                const Text(
-                  '設備關閉中',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 27,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xffffffff),
-                    letterSpacing: 10,
-                  ),
-                ),
-            ],
-          ));
 }
 
 String limitText(String text, int maxLength) {

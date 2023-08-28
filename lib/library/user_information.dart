@@ -51,6 +51,11 @@ class UserInformation with UserFunction {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     try {
       var loginMethodStr = prefs.getString('loginMethodStr');
+      var userSetStr = prefs.getString('userSetStr');
+      if (userSetStr != null) {
+        Map<String, dynamic> userSet = jsonDecode(userSetStr);
+        notification.set(userSet['notification']);
+      }
       if (loginMethodStr != null) {
         Map<String, dynamic> loginMethod = jsonDecode(loginMethodStr);
         _info['method'] = loginMethod['method'];
@@ -194,29 +199,48 @@ mixin UserFunction {
   }
 
 // 登出
-  Future<void> logout() async {
+  Future<bool> logout() async {
     try {
       await _auth.signOut();
       if (googleUser != null) {
         googleUser = await GoogleSignIn().signOut();
       }
+      _deviceList = [];
       logger.i('Logout success');
+      return true;
     } catch (e) {
       logger.e(e);
+      return false;
+    }
+  }
+
+//刪除帳戶
+  Future<bool> deletUser() async {
+    try {
+      await _auth.currentUser!.delete();
+      if (googleUser != null) {
+        googleUser = await GoogleSignIn().signOut();
+      }
+      return true;
+    } catch (e) {
+      logger.e(e);
+      return false;
     }
   }
 
 // 更改使用者名稱
-  Future<void> updateUserName(String newUserName) async {
+  Future<bool> updateUserName(String newUserName) async {
     User? user = _auth.currentUser;
     if (user != null) {
       try {
         await user.updateDisplayName(newUserName);
         userInfo.name = newUserName;
+        return true;
       } on FirebaseAuthException catch (e) {
         logger.e(e.code);
       }
     }
+    return false;
   }
 
 // 更改使用者密碼

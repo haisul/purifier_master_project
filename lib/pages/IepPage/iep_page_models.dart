@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:purmaster/library/function_status.dart';
+import 'package:purmaster/main_models.dart';
 import 'dart:convert';
 import 'dart:async';
 
@@ -71,6 +72,33 @@ class IepPageControll with ChangeNotifier {
     getFunc(funcName).state = val;
     _timerStart(funcName);
     notifyListeners();
+    showNotification(funcName, val);
+  }
+
+  void showNotification(String funcName, bool val) {
+    String title = '';
+    String? state;
+    switch (funcName) {
+      case 'all':
+        title = '全速淨化';
+        break;
+      case 'pur':
+        title = '空氣清淨';
+        break;
+      case 'fog':
+        title = '超音波霧化';
+        break;
+      case 'uvc':
+        title = 'UVC滅菌燈';
+        break;
+    }
+    if (val) {
+      state = '啟動';
+    } else {
+      state = '關閉';
+    }
+
+    notification.show('$title $state');
   }
 
   void setCountState(String funcName, bool val) {

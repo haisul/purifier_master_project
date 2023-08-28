@@ -165,7 +165,7 @@ class LoginPagePageControll with ChangeNotifier {
   }
 
   Future<void> emailLoginButton(String? email, String? password) async {
-    LoadingDialog.show(context, '登入中');
+    LoadingDialog.show(context, description: '登入中');
     bool result = await loginWithEmail(email, password);
     // ignore: use_build_context_synchronously
     LoadingDialog.hide(context);
@@ -180,7 +180,7 @@ class LoginPagePageControll with ChangeNotifier {
   }
 
   Future<void> googleLoginButton() async {
-    LoadingDialog.show(context, '登入中');
+    LoadingDialog.show(context, description: '登入中');
     bool result = await loginWithGoogle();
     // ignore: use_build_context_synchronously
     LoadingDialog.hide(context);

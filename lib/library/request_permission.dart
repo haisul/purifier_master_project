@@ -16,8 +16,7 @@ class RequestPermission {
     return status == PermissionStatus.granted;
   }
 
-  /*Future<bool> checkPermission(Permission permission) async {
-    PermissionStatus status = await permission.status;
-    return status == PermissionStatus.granted;
-  }*/
+  Future<void> requestNotificationPermission() async {
+    PermissionStatus status = await Permission.notification.request();
+  }
 }

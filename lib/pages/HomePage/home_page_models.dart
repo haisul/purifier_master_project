@@ -6,6 +6,14 @@ import 'package:purmaster/pages/IepPage/iep_page.dart';
 import 'package:purmaster/library/weather.dart' hide logger;
 import 'package:purmaster/main_models.dart';
 
+class UserNameControll with ChangeNotifier {
+  String userName = userInfo.name;
+  void updateUserName() {
+    userName = userInfo.name;
+    notifyListeners();
+  }
+}
+
 class HomePageControll with ChangeNotifier {
   BuildContext? homeContext;
   HomePageControll({
@@ -17,7 +25,6 @@ class HomePageControll with ChangeNotifier {
       logger.e(e);
     }
     mqttClient.mqttMsgNotifier.addListener(mqttMsgProcess);
-    mqttClient.connectedNotifier.addListener(mqttConnected);
   }
   String userId = userInfo.email;
   List<IntoDeviceButton> deviceBtnList = [];
@@ -88,7 +95,7 @@ class HomePageControll with ChangeNotifier {
                   String name = msg.replaceAll('reName:', '');
                   reNamedBtn(deviceInfo['serialNum'], name);
                 } else if (msg == 'shutDown') {
-                  LoadingDialog.show(homeContext!, '設備關閉中');
+                  LoadingDialog.show(homeContext!, description: '設備關閉中');
                   device.updateMainPower(false);
                   mqttClient.sendMessage(
                       '$userId/${deviceInfo['serialNum']}/app', 'shutDown');
@@ -174,13 +181,13 @@ class HomePageControll with ChangeNotifier {
     }
   }
 
-  void mqttConnected() {
+  /*void mqttConnected() {
     if (!mqttClient.connectedNotifier.value) {
       CustomSnackBar.show(homeContext!, '設備連線中斷');
     } else {
       CustomSnackBar.show(homeContext!, '設備連線成功');
     }
-  }
+  }*/
 
   Map<String, dynamic> _toMap(IntoDeviceButton widget) {
     Map<String, dynamic> data = <String, dynamic>{};

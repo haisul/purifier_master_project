@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:purmaster/main_models.dart';
+import 'package:purmaster/pages/HomePage/home_page_models.dart';
 import 'package:purmaster/widget/custom_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:purmaster/pages/SettingPage/setting_page_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:image/image.dart' as img;
 
 ////////////////////MainPage////////////////////
 class SettingPage extends StatelessWidget {
   final SettingPageControll settingPageControll;
-  SettingPage({super.key, required this.settingPageControll}) {
+  final UserNameControll userNameControll;
+  SettingPage(
+      {super.key,
+      required this.settingPageControll,
+      required this.userNameControll}) {
     settingPageControll.getMapFromFirestore();
   }
 
@@ -33,6 +40,7 @@ class SettingPage extends StatelessWidget {
               InnerPageControll(curPageList: curPageList),
         ),
         ChangeNotifierProvider.value(value: settingPageControll),
+        ChangeNotifierProvider.value(value: userNameControll),
       ],
       child:
           Consumer<InnerPageControll>(builder: (context, pageControll, child) {
@@ -124,7 +132,7 @@ class ServiceChoise extends StatelessWidget implements NameWidget {
           ),
           BlackButton(
               width: 105,
-              str: 'Edit Profile',
+              str: '使用者資訊',
               onPressed: () => context.read<InnerPageControll>().gotoPage(1)),
           SizedBox(
             height: MediaQuery.of(context).size.height * 0.6,
@@ -160,9 +168,7 @@ class ServiceChoise extends StatelessWidget implements NameWidget {
                     icon1: Icons.notifications_active_outlined,
                     icon2: Icons.chevron_right,
                     onPress: () =>
-                        //context.read<InnerPageControll>().gotoPage(5)),
-                        CustomSnackBar.show(context, '尚未新增此功能\n敬請期待',
-                            level: 0)),
+                        context.read<InnerPageControll>().gotoPage(5)),
                 ListButton(
                     name: '登出',
                     icon1: Icons.logout_outlined,
@@ -204,8 +210,25 @@ class _ProfilePageState extends State<ProfilePage> {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      LoadingDialog.show(context, description: '請稍候');
       File file = File(image.path);
-      userInfo.updateUserImg(file, userInfo.email).then((value) {
+
+      // 讀取原始圖片
+      final rawImage = img.decodeImage(await file.readAsBytes());
+
+      // 設定壓縮後的寬度和品質
+      final compressedImage = img.copyResize(rawImage!, width: 200);
+      final compressedBytes = img.encodeJpg(compressedImage, quality: 100);
+
+      // 保存壓縮後的圖片
+      final compressedFile = await file.writeAsBytes(compressedBytes);
+
+      Image.file(compressedFile, width: 200);
+
+      await userInfo
+          .updateUserImg(compressedFile, userInfo.email)
+          .then((value) {
+        LoadingDialog.hide(context);
         Provider.of<InnerPageControll>(context, listen: false).gotoPage(0);
         CustomSnackBar.show(context, '變更完成', level: 0, time: 5);
       });
@@ -274,15 +297,18 @@ class _ProfilePageState extends State<ProfilePage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  userInfo.name,
+                                  Provider.of<UserNameControll>(context)
+                                      .userName,
                                   style: const TextStyle(fontSize: 20),
                                 ),
                                 BlackButton(
                                   str: '變更',
                                   onPressed: () {
-                                    //callChangeName(context);
                                     callChangeName(context).then((value) {
                                       if (value) {
+                                        Provider.of<UserNameControll>(context,
+                                                listen: false)
+                                            .updateUserName();
                                         Provider.of<InnerPageControll>(context,
                                                 listen: false)
                                             .gotoPage(0);
@@ -347,6 +373,34 @@ class _ProfilePageState extends State<ProfilePage> {
                                     CustomSnackBar.show(
                                         context, 'Google登入不支援密碼變更');
                                   }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 15, bottom: 15),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '刪除帳號',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Container(
+                              height: 2,
+                              width: null,
+                              color: const Color(0xffcccccc),
+                            ),
+                            Container(
+                              alignment: Alignment.centerRight,
+                              child: BlackButton(
+                                color: const Color.fromARGB(255, 255, 100, 100),
+                                str: '刪除',
+                                onPressed: () {
+                                  callDeleteUser(context);
                                 },
                               ),
                             ),
@@ -610,7 +664,12 @@ class _SettingPage4State extends State<SettingPage4> {
                         color: Color.fromARGB(180, 0, 0, 0),
                       ),
                     ),
-                    SwitchButton(onChanged: (state) {}),
+                    SwitchButton(
+                        isTurnOn: notification.state,
+                        onChanged: (state) {
+                          notification.set(state);
+                          CustomSnackBar.show(context, '完成設定', level: 0);
+                        }),
                   ],
                 ),
               ),
@@ -633,6 +692,7 @@ class SettingPage5 extends StatefulWidget implements NameWidget {
 }
 
 class _SettingPage5State extends State<SettingPage5> {
+  String? message;
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -644,37 +704,60 @@ class _SettingPage5State extends State<SettingPage5> {
             children: [
               CardWidget(
                 width: 320,
-                height: 300,
+                height: 150,
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 30),
-                    child: const Text(
-                      '感謝您提供寶貴的意見',
-                      style: TextStyle(
-                          color: Color.fromARGB(120, 0, 0, 0),
-                          fontSize: 14,
-                          letterSpacing: 2),
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.center,
+                      //margin: const EdgeInsets.only(bottom: 30),
+                      child: const Text(
+                        '感謝您提供寶貴的意見\n請點擊下方回饋鈕',
+                        style: TextStyle(
+                            color: Color.fromARGB(120, 0, 0, 0),
+                            fontSize: 14,
+                            letterSpacing: 2),
+                      ),
                     ),
                   ),
-                  Container(
+                  /*Container(
                     width: 250,
                     height: 200,
                     decoration: const BoxDecoration(
                       color: Color.fromARGB(10, 0, 0, 0),
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
-                    child: const TextField(
+                    child: TextField(
                       maxLines: null, // 設置為 null，讓其自動換行
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         contentPadding: EdgeInsets.all(10.0), // 設置上下左右 padding
                         border: InputBorder.none,
                         hintText: 'Enter a message',
                       ),
+                      onChanged: (value) => message = value,
                     ),
-                  ),
+                  ),*/
                 ],
               ),
-              NormalButton(str: 'Send', onPressed: () {}),
+              NormalButton(
+                  str: '回饋',
+                  onPressed: () async {
+                    String emailBody = 'UserUID:${userInfo.uid}\n\nFeedBack:\n';
+                    final Email email = Email(
+                      subject: 'PurMaster FeedBack',
+                      body: emailBody,
+                      recipients: ['lein.chang@msa.hinet.net'],
+                    );
+
+                    try {
+                      await FlutterEmailSender.send(email).then((value) {
+                        CustomSnackBar.show(context, '感謝您寶貴的意見', level: 0);
+                      });
+                      logger.i('Email sent successfully');
+                    } catch (error) {
+                      logger.e('Error occurred: $error');
+                      CustomSnackBar.show(context, '寄送失敗', level: 2);
+                    }
+                  }),
             ],
           ),
         ),
@@ -731,7 +814,8 @@ class _SettingPage6State extends State<SettingPage6> {
                   ),
                 )),
             const Text(
-              '版本:2.23.0.1',
+              '版本:1.0.0\n2023/06/01',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color.fromARGB(180, 0, 0, 0),
               ),
@@ -741,66 +825,6 @@ class _SettingPage6State extends State<SettingPage6> {
       ),
     );
   }
-}
-
-////////////////////widget////////////////////
-
-Future<dynamic> callLogout(BuildContext context) {
-  return showDialog(
-    context: context,
-    builder: (context) => CallDialog(
-      width: 320,
-      height: 200,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 30),
-          height: 50,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: const [
-              Text(
-                '確定登出嗎?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(120, 0, 0, 0),
-                  letterSpacing: 10,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.only(top: 30),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              BlackButton(
-                str: '確認',
-                onPressed: () {
-                  userInfo.logout().then((value) async {
-                    await userInfo.removeUserInfo();
-                    // ignore: use_build_context_synchronously
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/loginPage',
-                      (route) => false,
-                    );
-                  });
-                },
-              ),
-              BlackButton(
-                  str: '取消',
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }),
-            ],
-          ),
-        )
-      ],
-    ),
-  );
 }
 
 abstract class NameWidget {

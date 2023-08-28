@@ -6,7 +6,7 @@ import 'package:ele_progress/ele_progress.dart';
 import 'dart:async';
 import 'package:purmaster/pages/IepPage/iep_page_models.dart';
 import 'package:slider_button/slider_button.dart';
-
+import 'dart:math';
 ////////////////////MainPage////////////////////
 
 class IepPage extends StatelessWidget {
@@ -33,6 +33,7 @@ class IepPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    LoadingDialog.show(context, description: '', time: 1);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: iepPageControll),
@@ -143,7 +144,8 @@ class IepPage extends StatelessWidget {
                                 action: () {
                                   mqttClient.sendMessage(
                                       '$userId/$serialNum/app', 'turnOn');
-                                  LoadingDialog.show(context, '啟動中');
+                                  LoadingDialog.show(context,
+                                      description: '啟動中');
                                   iepPageControll.updateMainPower(true);
                                   Timer(const Duration(seconds: 3), () {
                                     LoadingDialog.hide(context);
@@ -190,7 +192,8 @@ class IepPageAll extends StatelessWidget {
                 mqttClient.sendMessage('$userId/$serialNum/app',
                     '${func}_state:${state ? 'on' : 'off'}');
                 controll.setState(func, state);
-                callOnOff(context, state: state, time: 5);
+                LoadingDialog.show(context,
+                    description: state == true ? '設備啟動中' : '設備關閉中', time: 5);
                 controll.all.countTime = controll.all.time;
                 controll.allOn(state);
               },
@@ -237,7 +240,8 @@ class IepPagePur extends StatelessWidget {
                 mqttClient.sendMessage('$userId/$serialNum/app',
                     '${func}_state:${state ? 'on' : 'off'}');
                 controll.setState(func, state);
-                callOnOff(context, state: state, time: 1);
+                LoadingDialog.show(context,
+                    description: state == true ? '設備啟動中' : '設備關閉中', time: 1);
                 controll.pur.countTime = controll.pur.time;
               },
             ),
@@ -351,7 +355,8 @@ class IepPageFog extends StatelessWidget {
                 mqttClient.sendMessage('$userId/$serialNum/app',
                     '${func}_state:${state ? 'on' : 'off'}');
                 controll.setState(func, state);
-                callOnOff(context, state: state, time: 2);
+                LoadingDialog.show(context,
+                    description: state == true ? '設備啟動中' : '設備關閉中', time: 2);
                 controll.fog.countTime = controll.fog.time;
               },
             ),
@@ -397,7 +402,8 @@ class IepPageUvc extends StatelessWidget {
                 mqttClient.sendMessage('$userId/$serialNum/app',
                     '${func}_state:${state ? 'on' : 'off'}');
                 controll.setState(func, state);
-                callOnOff(context, state: state, time: 5);
+                LoadingDialog.show(context,
+                    description: state == true ? '設備啟動中' : '設備關閉中', time: 5);
                 controll.uvc.countTime = controll.uvc.time;
               },
             ),
@@ -560,14 +566,12 @@ class DustInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final containerHeight = MediaQuery.of(context).size.height / 4;
-    var humdValue = Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.only(right: 20),
+    var humdValue = FittedBox(
+      fit: BoxFit.scaleDown,
       child: Row(
         children: [
           const Icon(
             Icons.water_drop_outlined,
-            size: 30,
             color: Color.fromARGB(255, 120, 120, 120),
           ),
           RichText(
@@ -592,16 +596,12 @@ class DustInfoCard extends StatelessWidget {
         ],
       ),
     );
-    var tempValue = Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.only(
-        left: 20,
-      ),
+    var tempValue = FittedBox(
+      fit: BoxFit.scaleDown,
       child: Row(
         children: [
           const Icon(
             Icons.thermostat,
-            size: 30,
             color: Color.fromARGB(255, 120, 120, 120),
           ),
           RichText(
@@ -626,21 +626,18 @@ class DustInfoCard extends StatelessWidget {
         ],
       ),
     );
-    var pm25Value = Container(
-      margin: const EdgeInsets.only(top: 90),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(
-            fontFamily: 'Agencyb',
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 120, 120, 120),
-          ),
-          text: '${context.watch<IepPageControll>().pms['pm25']?.toInt()}',
-          children: const [
-            TextSpan(text: 'um/m3', style: TextStyle(fontSize: 24)),
-          ],
+    var pm25Value = RichText(
+      text: TextSpan(
+        style: const TextStyle(
+          fontFamily: 'Agencyb',
+          fontSize: 30,
+          fontWeight: FontWeight.bold,
+          color: Color.fromARGB(255, 120, 120, 120),
         ),
+        text: '${context.watch<IepPageControll>().pms['pm25']?.toInt()}',
+        children: const [
+          TextSpan(text: 'um/m3', style: TextStyle(fontSize: 24)),
+        ],
       ),
     );
     return Container(
@@ -656,18 +653,37 @@ class DustInfoCard extends StatelessWidget {
           fit: BoxFit.contain,
           color: const Color.fromARGB(255, 120, 120, 120),
         ),
-        Center(
-          child: Column(
-            children: [
-              pm25Value,
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  tempValue,
-                  humdValue,
-                ],
-              ),
-            ],
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            height: containerHeight / 2 * sqrt(2),
+            width: containerHeight / 2 * sqrt(2),
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'PM2.5',
+                  style: TextStyle(
+                    letterSpacing: 0,
+                    fontFamily: 'Agencyb',
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 120, 120, 120),
+                  ),
+                ),
+                pm25Value,
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      tempValue,
+                      humdValue,
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         )
       ]),

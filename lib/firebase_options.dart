@@ -25,10 +25,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -58,7 +55,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB-gMNf_dne5WAuov7vODKASkGEF4GEgR4',
-    appId: '1:753864698672:android:a269275e9764844fecf6f5',
+    appId: '1:753864698672:android:fc3a21e85ca50fa3ecf6f5',
     messagingSenderId: '753864698672',
     projectId: 'purifier-master-9dca0',
     storageBucket: 'purifier-master-9dca0.appspot.com',
@@ -70,6 +67,18 @@ class DefaultFirebaseOptions {
     messagingSenderId: '753864698672',
     projectId: 'purifier-master-9dca0',
     storageBucket: 'purifier-master-9dca0.appspot.com',
+    androidClientId: '753864698672-8vmv9k75vukqo6cnkqktrlu2v6vp104p.apps.googleusercontent.com',
+    iosClientId: '753864698672-ht4dct05qd25nf9vl1ijvhh1btfsijje.apps.googleusercontent.com',
+    iosBundleId: 'com.example.purifierMasterProject',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAqLE8WlHfn35XEfwSsxl26QvvalMx0pyA',
+    appId: '1:753864698672:ios:9078d8e1ec622a47ecf6f5',
+    messagingSenderId: '753864698672',
+    projectId: 'purifier-master-9dca0',
+    storageBucket: 'purifier-master-9dca0.appspot.com',
+    androidClientId: '753864698672-8vmv9k75vukqo6cnkqktrlu2v6vp104p.apps.googleusercontent.com',
     iosClientId: '753864698672-ht4dct05qd25nf9vl1ijvhh1btfsijje.apps.googleusercontent.com',
     iosBundleId: 'com.example.purifierMasterProject',
   );

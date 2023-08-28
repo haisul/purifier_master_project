@@ -68,6 +68,7 @@ class SettingPageControll with ChangeNotifier {
                     msg = msg.replaceAll('remove:', '');
                     wifiSSID.remove(msg);
                   } else {
+                    wifiSSID.remove(msg);
                     wifiSSID.add(msg);
                   }
                   deviceList[i]['wifiSSID'] = wifiSSID;
@@ -157,11 +158,18 @@ class _ChangeNameState extends State<ChangeName> {
         ),
         BlackButton(
           str: '確認',
-          onPressed: () {
+          onPressed: () async {
             if (giveName != null) {
-              userInfo.updateUserName(giveName!);
-              CustomSnackBar.show(context, '變更完成', level: 0, time: 5);
-              Navigator.pop(context, true);
+              LoadingDialog.show(context, description: '請稍候');
+              await userInfo.updateUserName(giveName!).then((result) {
+                LoadingDialog.hide(context);
+                if (result) {
+                  CustomSnackBar.show(context, '變更完成', level: 0, time: 3);
+                  Navigator.pop(context, true);
+                } else {
+                  CustomSnackBar.show(context, '操作失敗', level: 2, time: 3);
+                }
+              });
             } else {
               CustomSnackBar.show(context, '請輸入完整資訊');
             }
@@ -536,12 +544,10 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
   @override
   Widget build(BuildContext context) {
     var mainPage = Container(
-      height: 500,
+      height: 300,
       margin: const EdgeInsets.only(top: 30),
       child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ...wifiBtns,
             ListButton(
@@ -559,8 +565,6 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
     var addPage = Container(
       margin: const EdgeInsets.only(top: 30),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             height: 50,
@@ -648,13 +652,17 @@ class _AddDeviceWifiState extends State<AddDeviceWifi> {
 
     return CallDialog(
       width: 320,
-      height: 600,
+      height: 420,
       children: [
         Align(
           alignment: Alignment.topRight,
           child: Text(
             '${limitText(deviceName, 8)} WiFi清單',
-            style: const TextStyle(fontSize: 20),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Color.fromARGB(120, 0, 0, 0),
+            ),
           ),
         ),
         pages[index],
@@ -674,3 +682,209 @@ Future<String?> callAddDeviceWifi(
     },
   );
 }
+
+Future<dynamic> callLogout(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (context) => CallDialog(
+      width: 320,
+      height: 200,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          height: 50,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: const [
+              Text(
+                '確定登出嗎?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(120, 0, 0, 0),
+                  letterSpacing: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              BlackButton(
+                str: '確認',
+                onPressed: () {
+                  userInfo.logout().then((result) async {
+                    if (result) {
+                      await userInfo.removeUserInfo();
+                      // ignore: use_build_context_synchronously
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/loginPage',
+                        (route) => false,
+                      );
+                    }
+                  });
+                },
+              ),
+              BlackButton(
+                  str: '取消',
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }),
+            ],
+          ),
+        )
+      ],
+    ),
+  );
+}
+
+Future<dynamic> callDeleteUser(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (context) => CallDialog(
+      width: 320,
+      height: 200,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: const [
+              Text(
+                '確定刪除帳戶嗎?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(120, 0, 0, 0),
+                  letterSpacing: 10,
+                ),
+              ),
+              Text(
+                '請注意，一但刪除帳戶後，將無法復原',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(120, 0, 0, 0),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              BlackButton(
+                color: const Color.fromARGB(255, 255, 100, 100),
+                str: '刪除',
+                onPressed: () {
+                  userInfo.deletUser().then((value) async {
+                    if (value) {
+                      await userInfo.removeUserInfo();
+                      await userInfo.logout();
+                      // ignore: use_build_context_synchronously
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/loginPage',
+                        (route) => false,
+                      );
+                    }
+                  });
+                },
+              ),
+              BlackButton(
+                  str: '取消',
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }),
+            ],
+          ),
+        )
+      ],
+    ),
+  );
+}
+
+/*
+Future<dynamic> callSendFeedback(BuildContext context, String? msg) {
+  return showDialog(
+    context: context,
+    builder: (context) => CallDialog(
+      width: 320,
+      height: 200,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          height: 50,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: const [
+              Text(
+                '確定寄出嗎?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(120, 0, 0, 0),
+                  letterSpacing: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(top: 30),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              BlackButton(
+                str: '確定',
+                onPressed: () async {
+                  if (msg != null) {
+                    //LoadingDialog.show(context, description: '請稍候');
+
+                    String emailBody =
+                        'UserInfo:\n method:${userInfo.method}\n name:${userInfo.name}\n email:${userInfo.email}\n uid:${userInfo.uid}\n\nFeedBack:\n$msg';
+                    final Email email = Email(
+                      subject: 'PurMaster FeedBack',
+                      body: emailBody,
+                      recipients: ['ex2252@gmail.com'],
+                    );
+                    /*final message = Message()
+                      ..from = Address(username, userInfo.name)
+                      ..recipients.add('ex2252@gmail.com')
+                      ..subject = 'PurMaster FeedBack'
+                      ..text = emailBody;*/
+
+                    try {
+                      await FlutterEmailSender.send(email).then((value) {
+                        CustomSnackBar.show(context, '感謝您寶貴的意見', level: 0);
+                      });
+                      logger.i('Email sent successfully');
+                    } catch (error) {
+                      logger.e('Error occurred: $error');
+                      CustomSnackBar.show(context, '寄送失敗', level: 2);
+                    }
+                  }
+                },
+              ),
+              BlackButton(
+                  str: '取消',
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }),
+            ],
+          ),
+        )
+      ],
+    ),
+  );
+}
+*/
