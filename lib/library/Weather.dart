@@ -41,7 +41,7 @@ class MyWeather {
     const authority = 'opendata.cwb.gov.tw';
     const unencodedPath = '/api/v1/rest/datastore/O-A0001-001';
     final queryParameters = {
-      'Authorization': 'CWB-64A60D74-D2E4-4F8A-AEE8-0B6D2F87B28A',
+      'Authorization': '',
       'stationId': stationId,
     };
     final url = Uri.https(authority, unencodedPath, queryParameters);
